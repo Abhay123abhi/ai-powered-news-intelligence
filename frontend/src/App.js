@@ -6,6 +6,7 @@ import AiWorkspace from "./features/ai/components/AiWorkspace";
 import "./App.css";
 import "./ai-first.css";
 import "./discover-refresh.css";
+import "./mobile.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -90,6 +91,10 @@ export default function App() {
           <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
           <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
         </button>
+      </nav>
+      <nav className="mobile-section-nav" aria-label="Mobile page sections">
+        <a href="#ai-workspace"><span aria-hidden="true">✦</span> AI workspace</a>
+        <a href="#stories">Discover <span aria-hidden="true">↓</span></a>
       </nav>
     </header>
 
