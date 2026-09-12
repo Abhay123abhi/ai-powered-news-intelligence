@@ -4,6 +4,7 @@ import SearchForm from "./features/news/components/SearchForm";
 import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
 import "./App.css";
+import "./ai-first.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -81,8 +82,8 @@ export default function App() {
           <span className="brand-copy"><strong>Newsroom</strong><small>INTELLIGENCE</small></span>
         </a>
         <div className="nav-links" aria-label="Page sections">
-          <a className="active" href="#stories">Discover</a>
           <a href="#ai-workspace">AI workspace <span>Live</span></a>
+          <a href="#stories">Discover</a>
         </div>
         <button className="theme-toggle" type="button" onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
           <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
@@ -94,21 +95,29 @@ export default function App() {
     <main>
       <section className="hero">
         <div className="hero-copy-block">
-          <div className="live-label"><span aria-hidden="true" /> LIVE NEWS DISCOVERY</div>
-          <h1>See every angle.<br /><em>Understand what matters.</em></h1>
-          <p>One focused view of trusted reporting from The Guardian and The New York Times—designed to become your AI-powered news workspace.</p>
+          <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS DISCOVERY</div>
+          <h1>Search the news.<br /><em>Work with it.</em></h1>
+          <p>Search trusted reporting from The Guardian and The New York Times, then use the AI workspace to brief, question, and compare the stories already in your feed.</p>
+
           <SearchForm initialKeyword={search.keyword} initialPageSize={search.pageSize} onSearch={handleSearch} loading={loading} />
+
           <div className="quick-topics" aria-label="Quick topics">
             <span>Explore</span>
             {QUICK_TOPICS.map((topic) => <button className={search.keyword.toLowerCase() === topic ? "selected" : ""} type="button" key={topic} onClick={() => handleTopicChange(topic)} disabled={loading}>{labelForTopic(topic)}</button>)}
           </div>
+
+          <div className="source-strip" aria-label="Connected news sources">
+            <span className="source-strip-label">Sources</span>
+            <span className="source-chip"><i className="guardian-dot" /> The Guardian</span>
+            <span className="source-chip"><i className="nyt-dot" /> The New York Times</span>
+            <span className="source-grounding">AI uses the stories shown in your feed</span>
+          </div>
         </div>
 
-        <aside className="source-board" aria-label="Connected news sources">
-          <div className="source-board-head"><div><span>LIVE INPUTS</span><strong>Source network</strong></div><span className="pulse-ring"><i /></span></div>
-          <div className="source-row"><span className="source-icon guardian">G</span><div><strong>The Guardian</strong><small>Global reporting</small></div><span className="connected">Connected</span></div>
-          <div className="source-row"><span className="source-icon nyt">T</span><div><strong>The New York Times</strong><small>Article Search</small></div><span className="connected">Connected</span></div>
-        </aside>
+        <div className="hero-ai">
+          <div className="hero-ai-label"><span>✦</span> AI workspace</div>
+          <AiWorkspace articles={data.articles || []} />
+        </div>
       </section>
 
       <section className="content" id="stories" aria-live="polite">
@@ -119,17 +128,13 @@ export default function App() {
 
         {slowRequest && <div className="startup-banner" role="status"><span aria-hidden="true">◷</span><div><strong>Waking the news service</strong><p>The free server is starting. Your first request can take about a minute.</p></div></div>}
 
-        <div className="workspace-grid">
-          <div className="feed-column">
-            <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)} />
-            {!loading && !error && data.articles?.length > 0 && <nav className="pagination" aria-label="News result pages">
-              <button type="button" onClick={() => handlePageChange(data.prevPage)} disabled={!data.prevPage}><span aria-hidden="true">←</span> Previous</button>
-              <span>Page <strong>{data.page || 1}</strong>{data.totalPages > 1 && ` of ${data.totalPages}`}</span>
-              <button type="button" onClick={() => handlePageChange(data.nextPage)} disabled={!data.nextPage}>Next <span aria-hidden="true">→</span></button>
-            </nav>}
-          </div>
-
-          <AiWorkspace articles={data.articles || []} />
+        <div className="feed-column">
+          <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)} />
+          {!loading && !error && data.articles?.length > 0 && <nav className="pagination" aria-label="News result pages">
+            <button type="button" onClick={() => handlePageChange(data.prevPage)} disabled={!data.prevPage}><span aria-hidden="true">←</span> Previous</button>
+            <span>Page <strong>{data.page || 1}</strong>{data.totalPages > 1 && ` of ${data.totalPages}`}</span>
+            <button type="button" onClick={() => handlePageChange(data.nextPage)} disabled={!data.nextPage}>Next <span aria-hidden="true">→</span></button>
+          </nav>}
         </div>
       </section>
     </main>
