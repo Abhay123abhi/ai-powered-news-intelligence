@@ -5,6 +5,7 @@ import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
 import "./App.css";
 import "./ai-first.css";
+import "./discover-refresh.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
