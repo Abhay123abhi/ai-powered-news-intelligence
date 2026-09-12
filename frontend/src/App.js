@@ -97,7 +97,7 @@ export default function App() {
         <div className="hero-copy-block">
           <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS DISCOVERY</div>
           <h1>Search the news.<br /><em>Work with it.</em></h1>
-          <p>Search trusted reporting from The Guardian and The New York Times, then use the AI workspace to brief, question, and compare the stories already in your feed.</p>
+          <p>Search trusted reporting from The Guardian and The New York Times, then use AI to brief, question, and compare the stories already in your feed.</p>
 
           <SearchForm initialKeyword={search.keyword} initialPageSize={search.pageSize} onSearch={handleSearch} loading={loading} />
 
@@ -115,14 +115,13 @@ export default function App() {
         </div>
 
         <div className="hero-ai">
-          <div className="hero-ai-label"><span>✦</span> AI workspace</div>
           <AiWorkspace articles={data.articles || []} />
         </div>
       </section>
 
       <section className="content" id="stories" aria-live="polite">
         <div className="results-header">
-          <div><p className="section-label">YOUR NEWS FEED</p><h2>{resultSummary}</h2></div>
+          <div><p className="section-label">DISCOVER</p><h2>{resultSummary}</h2></div>
           {!loading && !error && <div className="result-metrics"><span><strong>{data.articles?.length || 0}</strong> shown</span><span><strong>{sourceCount}</strong> sources</span>{data.timeTakenMs != null && <span><strong>{data.timeTakenMs < 1000 ? `${data.timeTakenMs}ms` : `${(data.timeTakenMs / 1000).toFixed(1)}s`}</strong> response</span>}</div>}
         </div>
 
