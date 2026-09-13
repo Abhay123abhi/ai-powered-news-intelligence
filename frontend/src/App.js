@@ -154,7 +154,5 @@ export default function App() {
         </div>
       </section>
     </main>
-
-    <footer><div><span className="footer-brand">Newsroom Intelligence</span><p>Reporting stays with its original publisher. Open every source for complete context.</p></div><span>Guardian + NYT</span></footer>
   </div>;
 }
