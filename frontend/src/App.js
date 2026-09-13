@@ -6,6 +6,7 @@ import AiWorkspace from "./features/ai/components/AiWorkspace";
 import "./App.css";
 import "./ai-first.css";
 import "./discover-refresh.css";
+import "./premium-ai.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -94,11 +95,25 @@ export default function App() {
     </header>
 
     <main>
-      <section className="hero">
-        <div className="hero-copy-block">
-          <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS DISCOVERY</div>
-          <h1>Search the news.<br /><em>Work with it.</em></h1>
-          <p>Search trusted reporting from The Guardian and The New York Times, then use AI to brief, question, and compare the stories already in your feed.</p>
+      <section className="hero premium-hero">
+        <div className="hero-ambient" aria-hidden="true">
+          <span className="ambient-orb orb-one" />
+          <span className="ambient-orb orb-two" />
+          <span className="ambient-grid" />
+          <span className="signal-line signal-one" />
+          <span className="signal-line signal-two" />
+        </div>
+
+        <div className="hero-copy-block premium-copy">
+          <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE</div>
+          <h1>Search the news.<br /><em>Think beyond it.</em></h1>
+          <p>Trusted reporting becomes an AI research workspace. Search The Guardian and The New York Times, then generate a briefing, ask grounded questions, and compare how publishers frame the same story.</p>
+
+          <div className="hero-value-row" aria-label="AI workspace capabilities">
+            <span><i /> Source grounded</span>
+            <span><i /> Multi-publisher</span>
+            <span><i /> Gemini powered</span>
+          </div>
 
           <SearchForm initialKeyword={search.keyword} initialPageSize={search.pageSize} onSearch={handleSearch} loading={loading} />
 
@@ -111,11 +126,13 @@ export default function App() {
             <span className="source-strip-label">Sources</span>
             <span className="source-chip"><i className="guardian-dot" /> The Guardian</span>
             <span className="source-chip"><i className="nyt-dot" /> The New York Times</span>
-            <span className="source-grounding">AI uses the stories shown in your feed</span>
+            <span className="source-grounding">AI reasons only over the stories in your feed</span>
           </div>
         </div>
 
-        <div className="hero-ai">
+        <div className="hero-ai premium-ai-stage">
+          <div className="ai-stage-halo" aria-hidden="true" />
+          <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
           <AiWorkspace articles={data.articles || []} />
         </div>
       </section>
