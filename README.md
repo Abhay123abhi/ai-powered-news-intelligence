@@ -1,4 +1,4 @@
-# Newsroom Intelligence
+# AI-Powered News Intelligence Platform
 
 A full-stack news aggregation and AI-assisted reading workspace built with **Java 21, Spring Boot, React, Redis, The Guardian API, The New York Times API, and Gemini**.
 
