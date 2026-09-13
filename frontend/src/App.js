@@ -124,9 +124,8 @@ export default function App() {
 
           <div className="source-strip" aria-label="Connected news sources">
             <span className="source-strip-label">Sources</span>
-            <span className="source-chip"><i className="guardian-dot" /> The Guardian</span>
-            <span className="source-chip"><i className="nyt-dot" /> The New York Times</span>
-            <span className="source-grounding">AI reasons only over the stories in your feed</span>
+            <span className="source-chip guardian-source"><i className="guardian-dot" /> The Guardian</span>
+            <span className="source-chip nyt-source"><i className="nyt-dot" /> The New York Times</span>
           </div>
         </div>
 
@@ -155,7 +154,5 @@ export default function App() {
         </div>
       </section>
     </main>
-
-    <footer><div><span className="footer-brand">Newsroom Intelligence</span><p>Reporting stays with its original publisher. Open every source for complete context.</p></div><span>Guardian + NYT</span></footer>
   </div>;
 }
