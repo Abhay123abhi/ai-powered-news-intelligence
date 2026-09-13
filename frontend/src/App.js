@@ -7,6 +7,7 @@ import "./App.css";
 import "./ai-first.css";
 import "./discover-refresh.css";
 import "./premium-ai.css";
+import "./premium-ai-polish.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
