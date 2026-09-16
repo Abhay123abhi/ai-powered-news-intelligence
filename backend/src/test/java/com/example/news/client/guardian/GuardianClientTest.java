@@ -44,6 +44,26 @@ class GuardianClientTest {
     }
 
     @Test
+    void requestsRelevantArticlesForKeywordSearch() {
+        ReflectionTestUtils.setField(client, "apiKey", "guardian-key");
+        when(feignClient.search(eq("climate"), eq(1), eq(10), any(), eq("relevance"), eq("published"), eq("guardian-key")))
+                .thenReturn(Map.of("response", Map.of(
+                        "total", 1,
+                        "pages", 1,
+                        "results", List.of(Map.of(
+                                "webTitle", "Climate policy update",
+                                "webUrl", "https://example.com/climate",
+                                "webPublicationDate", "2026-09-16T10:00:00Z"
+                        ))
+                )));
+
+        NewsApiResult result = client.search("climate", 1, 10);
+
+        assertThat(result.articles()).hasSize(1);
+        verify(feignClient).search("climate", 1, 10, "thumbnail,trailText", "relevance", "published", "guardian-key");
+    }
+
+    @Test
     void reportsMissingApiKeyAsProviderFailure() {
         ReflectionTestUtils.setField(client, "apiKey", "");
 
