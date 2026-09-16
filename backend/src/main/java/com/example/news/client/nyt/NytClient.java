@@ -38,8 +38,9 @@ public class NytClient implements NewsProviderClient {
         }
 
         try {
+            String sort = keyword == null || keyword.isBlank() ? "newest" : "relevance";
             Map<String, Object> responseMap =
-                    feignClient.search(keyword, Math.max(0, page - 1), "newest", apiKey);
+                    feignClient.search(keyword, Math.max(0, page - 1), sort, apiKey);
 
             Map<String, Object> response =
                     (Map<String, Object>) responseMap.get("response");
