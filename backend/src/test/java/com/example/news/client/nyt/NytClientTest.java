@@ -43,9 +43,9 @@ class NytClientTest {
     }
 
     @Test
-    void requestsRelevantArticlesForKeywordSearch() {
+    void leavesSortUnsetSoNytUsesDefaultRelevanceForKeywordSearch() {
         ReflectionTestUtils.setField(client, "apiKey", "nyt-key");
-        when(feignClient.search("climate", 0, "relevance", "nyt-key"))
+        when(feignClient.search("climate", 0, null, "nyt-key"))
                 .thenReturn(Map.of("response", Map.of(
                         "meta", Map.of("hits", 1),
                         "docs", List.of(Map.of(
@@ -60,7 +60,7 @@ class NytClientTest {
         NewsApiResult result = client.search("climate", 1, 10);
 
         assertThat(result.articles()).hasSize(1);
-        verify(feignClient).search("climate", 0, "relevance", "nyt-key");
+        verify(feignClient).search("climate", 0, null, "nyt-key");
     }
 
     @Test
