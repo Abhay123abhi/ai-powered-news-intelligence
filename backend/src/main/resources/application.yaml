@@ -30,9 +30,16 @@ nyt:
 ai:
   enabled: ${AI_ENABLED:true}
   requests-per-minute: ${AI_REQUESTS_PER_MINUTE:15}
+  cache-ttl: ${AI_CACHE_TTL:30m}
   gemini:
     api-key: ${GEMINI_API_KEY:}
     model: ${GEMINI_MODEL:gemini-3.6-flash}
+    connect-timeout: ${GEMINI_CONNECT_TIMEOUT:5s}
+    read-timeout: ${GEMINI_READ_TIMEOUT:25s}
+    max-retries: ${GEMINI_MAX_RETRIES:2}
+    retry-backoff: ${GEMINI_RETRY_BACKOFF:400ms}
+    circuit-failure-threshold: ${GEMINI_CIRCUIT_FAILURE_THRESHOLD:4}
+    circuit-open-duration: ${GEMINI_CIRCUIT_OPEN_DURATION:30s}
 
 news:
   guardian:
