@@ -53,7 +53,7 @@ function StructuredInsight({ response }) {
               const citation = citationMap.get(sourceId);
               if (!citation?.url || citation.url === "Unavailable") return null;
               return <a key={sourceId} href={citation.url} target="_blank" rel="noreferrer" title={citation.title}>
-                {citation.source || `Source ${sourceId}`}
+                [{sourceId}] {citation.source || `Source ${sourceId}`}
               </a>;
             })}
           </span>}
