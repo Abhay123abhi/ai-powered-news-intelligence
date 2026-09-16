@@ -66,6 +66,34 @@ class AggregationServiceTest {
     }
 
     @Test
+    void ranksKeywordMatchesAheadOfNewerUnrelatedVisibleText() {
+        NewsArticle unrelated = new NewsArticle(
+                "Global politics update",
+                "Latest diplomatic developments",
+                "https://example.com/unrelated",
+                "The Guardian",
+                "2026-09-16T12:00:00Z",
+                null
+        );
+        NewsArticle relevant = new NewsArticle(
+                "Climate policy update",
+                "New climate rules for power plants",
+                "https://example.com/climate",
+                "The Guardian",
+                "2026-09-16T10:00:00Z",
+                null
+        );
+
+        when(provider.getProviderName()).thenReturn("Guardian");
+        when(provider.search("climate", 1, 12))
+                .thenReturn(new NewsApiResult(2, 1, List.of(unrelated, relevant)));
+
+        SearchResponse response = service.search("climate", 1, 12);
+
+        assertThat(response.articles()).containsExactly(relevant, unrelated);
+    }
+
+    @Test
     void doesNotExposeNextPageOnLastProviderPage() {
         when(provider.getProviderName()).thenReturn("Guardian");
         when(provider.search("java", 3, 12))
