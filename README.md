@@ -1,125 +1,260 @@
 # AI-Powered News Intelligence Platform
 
-A full-stack news aggregation and AI-assisted reading workspace built with **Java 21, Spring Boot, React, Redis, The Guardian API, The New York Times API, and Gemini**.
+A full-stack news aggregation and AI-assisted reading workspace built with **Java 21, Spring Boot, React, Redis, The Guardian API, The New York Times API, and Google Gemini**.
 
-The project started as a straightforward aggregator. The interesting part came later: keeping aggregation reliable and independent, then adding AI as an optional intelligence layer instead of making the whole product depend on an LLM.
+The project keeps news aggregation independent from AI. Guardian and NYT remain the source of truth for retrieved news, while Gemini acts as an optional intelligence layer for **daily briefings, grounded Q&A, article summaries, why-it-matters explanations, and cross-publisher coverage comparison**.
 
-The result is a small system that can:
+The current AI flow goes beyond a simple LLM API call: responses are cached in Redis, Gemini requests are protected with timeout/retry/circuit-breaker behavior, model output follows a structured contract, and every returned source reference is validated against the articles supplied to the model.
 
-- search multiple publishers through one API,
-- fan out provider calls concurrently,
-- normalize and deduplicate responses,
-- cache repeated searches in Redis,
-- keep serving news when one provider or Redis has a problem,
-- generate a daily AI brief from the current feed,
-- answer questions using only the articles already retrieved,
-- compare observable differences in coverage across publishers,
-- switch AI off at runtime without breaking the core news experience.
+## Core capabilities
+
+- Search Guardian and NYT through one backend API.
+- Call news providers concurrently using Java 21 virtual threads and `CompletableFuture`.
+- Normalize provider-specific payloads into one `NewsArticle` model.
+- Deduplicate and sort aggregated results.
+- Cache repeated news searches in Redis.
+- Continue with partial results when one news provider fails.
+- Generate source-grounded AI briefings from the current feed.
+- Ask questions using only the retrieved articles.
+- Compare observable coverage differences across publishers.
+- Return structured AI sections instead of uncontrolled free-form text.
+- Validate AI `sourceIds` before exposing citations to the UI.
+- Cache repeated AI responses in Redis with configurable TTL.
+- Retry only transient Gemini failures with exponential backoff and jitter.
+- Temporarily open a circuit after repeated Gemini failures.
+- Disable AI without breaking the core news experience.
 
 ## Architecture
 
 ![Newsroom Intelligence architecture](docs/architecture.svg)
 
-The main design decision is simple: **news aggregation is the core product; AI is an optional capability on top of it.**
+The main design decision is:
 
-If `AI_ENABLED=false`, the Guardian + NYT flow continues to work normally. If Gemini is unavailable or the key is missing, the user can still search, paginate, read, and benefit from Redis caching.
-
-## What I built
-
-### News aggregation
-
-The backend exposes one search API and hides provider-specific details from the frontend.
-
-A request such as:
-
-```http
-GET /api/news?keyword=technology&page=1&pageSize=12
-```
-
-is handled as:
+> **News aggregation is the core product. AI is an optional intelligence layer on top of already-retrieved evidence.**
 
 ```text
-React
-  |
-  v
-NewsController
-  |
-  v
-Redis lookup
-  |
-  +---- hit ----> cached aggregated result
-  |
-  +---- miss
-          |
-          v
-   AggregationService
-      /         \
- Guardian       NYT
-      \         /
-       merge + dedupe
-            |
-            v
-          Redis
-            |
-            v
-         response
+                    React
+                      |
+             +--------+---------+
+             |                  |
+             v                  v
+        News search         AI workspace
+             |                  |
+             v                  v
+     NewsController        AiController
+             |                  |
+             v                  v
+        Redis cache       AiInsightService
+             |                  |
+       hit / miss              |
+             |          build grounded context
+             v                  |
+   AggregationService          v
+      /          \        Redis AI cache
+ Guardian        NYT        hit / miss
+      \          /             |
+       merge + dedupe          | miss
+             |                 v
+             v         GeminiAiProvider
+           Redis               |
+             |        timeout / retry / circuit
+             v                 |
+          response             v
+                           Gemini LLM
+                               |
+                               v
+                        structured JSON
+                               |
+                               v
+                     schema + citation validation
+                               |
+                               v
+                         Redis AI cache
+                               |
+                               v
+                      structured API response
+                               |
+                               v
+                     React sections + sources
 ```
 
-Guardian and NYT are called concurrently. Their responses are mapped into the same `NewsArticle` model, normalized, deduplicated and sorted by publication time before they reach the UI.
+If `AI_ENABLED=false`, Gemini is removed from the request path while Guardian + NYT search, pagination, Redis news caching, and the normal UI continue to work.
 
-### AI intelligence layer
+## AI intelligence layer
 
-AI is deliberately separated from `AggregationService`.
+The browser never calls Gemini directly and never receives the Gemini API key. React calls `/api/ai/*` on the Spring Boot backend.
 
 The backend currently supports:
 
-- **Daily AI brief** — compact overview of the important developments in the current feed.
-- **Ask the news** — question answering grounded only in the articles shown to the user.
-- **Compare coverage** — compares common ground, different emphasis and missing context across retrieved publishers.
-- **Article summary** — backend capability for concise article summaries.
-- **Why it matters** — backend capability that explains significance without inventing unsupported context.
+- **Daily brief** — overview, key developments, and watch-next items from the current feed.
+- **Ask the news** — answers grounded only in the supplied articles.
+- **Compare coverage** — common ground, different emphasis, and missing context across retrieved publishers.
+- **Article summary** — concise grounded summary of one article.
+- **Why it matters** — significance explained without unsupported speculation.
 
-The flow is:
+### Grounded prompt flow
 
-```text
-Current Guardian + NYT articles
-          |
-          v
-     AiController
-          |
-          v
-   AiInsightService
-          |
-          +--> prompt grounding / input limits
-          +--> request-per-minute protection
-          +--> 30-minute response cache
-          |
-          v
-      AiProvider
-          |
-          v
-   Gemini 3.6 Flash
-```
-
-The browser never sees the Gemini API key. It only calls `/api/ai/*` on the Spring Boot backend.
-
-### Graceful AI fallback
-
-AI can be disabled at any time:
+For an AI request, articles are numbered before being sent to Gemini:
 
 ```text
-AI_ENABLED=false
+[1]
+Title: ...
+Source: Guardian
+Published: ...
+Description: ...
+URL: ...
+
+[2]
+Title: ...
+Source: New York Times
+...
 ```
 
-After restart/redeploy:
+Gemini is instructed to use only those supplied articles and return JSON in this shape:
 
-- AI workspace shows **Offline**,
-- Gemini calls stop,
-- Guardian + NYT search still works,
-- Redis caching still works,
-- pagination and the normal UI still work.
+```json
+{
+  "sections": [
+    {
+      "heading": "Key developments",
+      "items": [
+        {
+          "text": "A grounded statement based on the current feed.",
+          "sourceIds": [1, 2]
+        }
+      ]
+    }
+  ]
+}
+```
 
-This makes AI a feature flag rather than a critical dependency.
+The backend then parses the JSON and removes any source ID that does not correspond to a supplied article.
+
+### Structured API response
+
+The API exposes both a compatibility `text` representation and the structured content used by the UI:
+
+```json
+{
+  "text": "Key developments\n• A grounded statement [1][2]",
+  "content": {
+    "sections": [
+      {
+        "heading": "Key developments",
+        "items": [
+          {
+            "text": "A grounded statement",
+            "sourceIds": [1, 2]
+          }
+        ]
+      }
+    ]
+  },
+  "citations": [
+    {
+      "id": 1,
+      "source": "Guardian",
+      "title": "Example article",
+      "url": "https://example.com/article"
+    }
+  ],
+  "model": "gemini-3.6-flash",
+  "cached": false
+}
+```
+
+React renders the structured sections and turns validated citation IDs into clickable source links.
+
+## Redis-backed AI response cache
+
+AI caching is separate from the existing news-search cache.
+
+```text
+AI request
+    |
+    v
+build deterministic cache key
+    |
+    v
+Redis: ai:insight:<key>
+   / \
+ hit  miss
+ |      |
+ v      v
+return  Gemini
+        |
+        v
+   validate response
+        |
+        v
+   write to Redis
+        |
+        v
+      return
+```
+
+AI cache keys include:
+
+- prompt version,
+- model identity,
+- operation type (`brief`, `ask`, `compare`, etc.),
+- article fingerprint,
+- question fingerprint when applicable.
+
+Article fingerprints use stable hashes of article URL/title/description, so identical requests can reuse the same generated result.
+
+Default AI cache TTL is **30 minutes** and is configurable with `AI_CACHE_TTL`.
+
+If Redis is unavailable, the AI feature degrades to an uncached Gemini request instead of failing solely because the cache is down.
+
+## Gemini resilience
+
+`GeminiAiProvider` calls the Gemini REST API directly through Spring `RestClient`. Spring AI is intentionally not required for this use case.
+
+The provider includes:
+
+```text
+Gemini request
+     |
+     v
+connect/read timeout
+     |
+     v
+transient failure?
+  /       \
+ no       yes
+ |         |
+ fail   retry with
+        exponential backoff
+        + random jitter
+            |
+            v
+      failure threshold reached?
+          /          \
+        no            yes
+        |              |
+      retry       open circuit
+                       |
+                       v
+              fail fast temporarily
+```
+
+Retries apply to transient conditions such as:
+
+- HTTP `429`,
+- HTTP `5xx`,
+- network/resource access failures.
+
+Non-transient client errors are not repeatedly retried.
+
+Default settings:
+
+- connection timeout: `5s`
+- read timeout: `25s`
+- retries: `2` after the initial attempt
+- retry backoff: `400ms` base with exponential growth + jitter
+- circuit failure threshold: `4`
+- circuit open duration: `30s`
 
 ## Technology stack
 
@@ -128,36 +263,19 @@ This makes AI a feature flag rather than a critical dependency.
 | Backend | Java 21, Spring Boot 3.5 |
 | HTTP integrations | Spring Cloud OpenFeign, Spring `RestClient` |
 | Concurrency | `CompletableFuture`, Java 21 virtual threads |
-| Caching | Spring Cache, Redis |
-| AI | Gemini 3.6 Flash behind `AiProvider` abstraction |
-| Validation / health | Bean Validation, Spring Boot Actuator |
+| Caching | Spring Cache, Redis, `StringRedisTemplate` |
+| AI | Google Gemini behind `AiProvider` abstraction |
+| AI response handling | Jackson structured JSON parsing + source validation |
 | Frontend | React 18, Axios |
+| Validation / health | Bean Validation, Spring Boot Actuator |
 | Build | Gradle, npm |
 | Packaging | Docker multi-stage build |
 | Deployment | Render Static Site, Docker Web Service, Render Key Value |
 | CI option | Jenkins |
 
-## High-level design
+## Design choices and patterns
 
-At HLD level the system has four responsibilities:
-
-1. **Frontend** — search, feed presentation, pagination, AI workspace and status.
-2. **Aggregation backend** — provider orchestration, normalization, fallback and cache-aside logic.
-3. **External integrations** — Guardian, NYT and Gemini.
-4. **Infrastructure** — Redis, Docker and Render deployment.
-
-A few choices were intentional:
-
-- No direct third-party API calls from React.
-- No API keys in frontend code.
-- No hard dependency between news retrieval and AI.
-- No scheduler/WebSocket requirement for the free Render deployment.
-- No database because the application does not currently own long-lived business data.
-- Redis is used for short-lived repeated-query acceleration, not as a source of truth.
-
-## Low-level design and patterns
-
-### Strategy pattern — provider abstraction
+### Strategy pattern — news providers
 
 ```java
 public interface NewsProviderClient {
@@ -166,13 +284,11 @@ public interface NewsProviderClient {
 }
 ```
 
-`GuardianClient` and `NytClient` implement the same contract. `AggregationService` depends on the interface rather than concrete providers.
+`GuardianClient` and `NytClient` implement the same contract, so `AggregationService` is not coupled to one publisher.
 
-That keeps the aggregator open for a future Reuters, NewsAPI or another provider without turning the service into a long provider-specific `if/else` chain.
+### Adapter pattern — normalized domain model
 
-### Adapter pattern — one domain model
-
-Guardian and NYT return different JSON structures. Each integration adapts its response to the shared model:
+Guardian and NYT payloads are adapted to:
 
 ```java
 public record NewsArticle(
@@ -185,55 +301,17 @@ public record NewsArticle(
 ) {}
 ```
 
-The rest of the backend and the React app work with this model instead of knowing provider-specific payload shapes.
-
-### Facade / orchestration
-
-`AggregationService` acts as the application-level facade for:
-
-- provider selection,
-- concurrent fetches,
-- timeout handling,
-- result merging,
-- URL normalization,
-- deduplication,
-- sorting,
-- pagination,
-- fallback behavior.
-
-### Cache-aside
-
-Repeated searches do not need to hit both upstream APIs every time.
-
-```text
-request -> Redis
-           |
-        cache hit ----------------> response
-           |
-        cache miss
-           |
-      providers
-           |
-     aggregate result
-           |
-       save Redis
-           |
-        response
-```
-
-Default news cache TTL is **30 minutes** and can be changed with `NEWS_CACHE_TTL`.
-
-If Redis is temporarily unavailable, the application falls back to live provider requests instead of failing the entire request.
+The rest of the application works with this model rather than provider-specific JSON.
 
 ### Fan-out / fan-in
 
-Provider calls are executed concurrently using Java 21 virtual threads with `CompletableFuture` orchestration.
+Guardian and NYT requests run concurrently. The backend waits for available provider results, then merges, normalizes, deduplicates, sorts, and paginates them.
 
-This fits the workload well because the tasks are mostly waiting on external HTTP calls.
+### Cache-aside
+
+Both the news layer and AI layer use cache-aside behavior, while Redis remains disposable infrastructure rather than a source of truth.
 
 ### AI provider abstraction
-
-AI follows the same dependency-inversion idea:
 
 ```java
 public interface AiProvider {
@@ -243,45 +321,57 @@ public interface AiProvider {
 }
 ```
 
-`GeminiAiProvider` is one implementation. `AiInsightService` does not need to know Gemini-specific HTTP details.
+`GeminiAiProvider` owns Gemini-specific HTTP details. `AiInsightService` owns the application-level AI use cases, grounding, cache-key generation, structured parsing, and citation validation.
 
-A future OpenAI, Groq or local Ollama implementation can be added behind the same interface without changing controllers or the frontend contract.
+A different model provider could be introduced behind `AiProvider` without rewriting the controllers or frontend workflow.
 
-### AI safety and quota controls
+## AI safety and correctness controls
 
-The current AI layer includes a few practical controls:
+The current implementation includes:
 
-- article content is treated as untrusted prompt data,
-- titles, descriptions, URLs and questions are length-bounded,
-- the model is explicitly instructed to use only supplied evidence,
-- unsupported questions should be rejected rather than invented,
-- AI requests have an application-side requests-per-minute guard,
-- repeated identical AI requests can reuse a 30-minute in-memory result cache,
-- the API key stays server-side.
+- article content treated as untrusted prompt data,
+- bounded article title/description/URL/question lengths,
+- explicit instruction to use only supplied evidence,
+- low generation temperature for more stable output,
+- JSON response MIME type requested from Gemini,
+- structured response parsing before data reaches React,
+- invalid/unknown source IDs removed by the backend,
+- publisher/title/URL citation metadata built by the backend rather than invented by the model,
+- application-side AI request-per-minute guard,
+- server-side API key only,
+- AI feature flag for graceful shutdown.
+
+This is **source-grounded generation**, not a full RAG system. The current feed is intentionally small enough to place directly in model context, so embeddings/vector search would add complexity without solving a current requirement.
 
 ## Repository structure
 
 ```text
-news_aggregator/
+ai-powered-news-intelligence/
 ├── backend/
 │   ├── Dockerfile
 │   ├── build.gradle
 │   └── src/
 │       ├── main/java/com/example/news/
-│       │   ├── ai/              # AI provider + AI orchestration
+│       │   ├── ai/
+│       │   │   ├── AiInsightService.java
+│       │   │   ├── AiProvider.java
+│       │   │   ├── AiResponse.java
+│       │   │   ├── AiResponseCache.java
+│       │   │   ├── GeminiAiProvider.java
+│       │   │   └── RedisAiResponseCache.java
 │       │   ├── client/
-│       │   │   ├── guardian/    # Guardian adapter
-│       │   │   └── nyt/         # NYT adapter
-│       │   ├── config/          # Redis, CORS, executors, OpenAPI
-│       │   ├── controller/      # News + AI REST endpoints
-│       │   ├── model/           # Shared records
-│       │   └── service/         # Aggregation + caching
+│       │   │   ├── guardian/
+│       │   │   └── nyt/
+│       │   ├── config/
+│       │   ├── controller/
+│       │   ├── model/
+│       │   └── service/
 │       ├── main/resources/application.yaml
 │       └── test/
 ├── frontend/
-│   └── src/
-│       ├── features/news/
-│       └── features/ai/
+│   └── src/features/
+│       ├── news/
+│       └── ai/
 ├── docs/
 │   └── architecture.svg
 ├── Jenkinsfile
@@ -292,20 +382,18 @@ news_aggregator/
 
 ### Prerequisites
 
-Install:
-
 - Java 21
 - Node.js 22
-- Redis running locally on `6379`
+- Redis on port `6379`
 - Guardian API key
 - NYT API key
-- Gemini API key if you want AI enabled
+- Gemini API key when AI is enabled
 
-At least one news provider key is required for backend startup. Using both gives the intended aggregator behavior.
+At least one news-provider key is required. Using both gives the intended aggregation behavior.
 
 ### Environment variables
 
-Windows PowerShell example:
+Windows PowerShell:
 
 ```powershell
 $env:GUARDIAN_API_KEY="your-guardian-key"
@@ -314,6 +402,13 @@ $env:GEMINI_API_KEY="your-gemini-key"
 $env:GEMINI_MODEL="gemini-3.6-flash"
 $env:AI_ENABLED="true"
 $env:AI_REQUESTS_PER_MINUTE="15"
+$env:AI_CACHE_TTL="30m"
+$env:GEMINI_CONNECT_TIMEOUT="5s"
+$env:GEMINI_READ_TIMEOUT="25s"
+$env:GEMINI_MAX_RETRIES="2"
+$env:GEMINI_RETRY_BACKOFF="400ms"
+$env:GEMINI_CIRCUIT_FAILURE_THRESHOLD="4"
+$env:GEMINI_CIRCUIT_OPEN_DURATION="30s"
 $env:REDIS_URL="redis://localhost:6379"
 ```
 
@@ -326,12 +421,17 @@ export GEMINI_API_KEY="your-gemini-key"
 export GEMINI_MODEL="gemini-3.6-flash"
 export AI_ENABLED="true"
 export AI_REQUESTS_PER_MINUTE="15"
+export AI_CACHE_TTL="30m"
+export GEMINI_CONNECT_TIMEOUT="5s"
+export GEMINI_READ_TIMEOUT="25s"
+export GEMINI_MAX_RETRIES="2"
+export GEMINI_RETRY_BACKOFF="400ms"
+export GEMINI_CIRCUIT_FAILURE_THRESHOLD="4"
+export GEMINI_CIRCUIT_OPEN_DURATION="30s"
 export REDIS_URL="redis://localhost:6379"
 ```
 
-Do not commit real API keys to `application.yaml`, `render.yaml`, React code or GitHub.
-
-For day-to-day local development, IntelliJ Run/Debug Configuration environment variables are more convenient than retyping PowerShell variables after every restart.
+Do not commit real API keys to source control.
 
 ### Start backend
 
@@ -349,9 +449,7 @@ cd backend
 ./gradlew bootRun
 ```
 
-A running Gradle `bootRun` task may stay at something like `80% EXECUTING`. That is normal while Spring Boot is serving requests.
-
-Backend health:
+Health:
 
 ```text
 http://localhost:8080/actuator/health
@@ -377,19 +475,19 @@ Open:
 http://localhost:3000
 ```
 
-The React development proxy forwards `/api` calls to `http://localhost:8080`.
+The React development proxy forwards `/api` requests to the Spring Boot backend.
 
-### Disable AI locally
+### Disable AI
 
 ```powershell
 $env:AI_ENABLED="false"
 ```
 
-Restart the backend. The news application remains usable and the AI workspace reports Offline.
+Restart the backend. Search and news browsing remain available while the AI workspace reports Offline.
 
 ## API examples
 
-### Search
+### Search news
 
 ```http
 GET /api/news?keyword=java&page=1&pageSize=12
@@ -400,8 +498,6 @@ GET /api/news?keyword=java&page=1&pageSize=12
 ```http
 GET /api/ai/status
 ```
-
-Example:
 
 ```json
 {
@@ -420,6 +516,29 @@ Content-Type: application/json
 {
   "articles": [
     {
+      "title": "Example headline",
+      "description": "Example description",
+      "url": "https://example.com/story",
+      "source": "Guardian",
+      "publishedAt": "2026-09-16T10:00:00Z",
+      "imageUrl": null
+    }
+  ]
+}
+```
+
+### Ask the news
+
+```http
+POST /api/ai/ask
+Content-Type: application/json
+```
+
+```json
+{
+  "question": "What are the biggest technology developments in this feed?",
+  "articles": [
+    {
       "title": "...",
       "description": "...",
       "url": "...",
@@ -431,26 +550,55 @@ Content-Type: application/json
 }
 ```
 
-### Ask the news
-
-```http
-POST /api/ai/ask
-```
-
-```json
-{
-  "question": "What are the biggest technology developments in this feed?",
-  "articles": []
-}
-```
-
 ### Compare coverage
 
 ```http
 POST /api/ai/compare
+Content-Type: application/json
 ```
 
-The React application builds these payloads automatically from the current feed.
+The React application constructs these payloads from the current feed automatically.
+
+## Configuration
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `GUARDIAN_API_KEY` | empty | Guardian API authentication |
+| `NYT_API_KEY` | empty | NYT API authentication |
+| `GEMINI_API_KEY` | empty | Backend-only Gemini authentication |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | Gemini model |
+| `AI_ENABLED` | `true` | AI feature switch |
+| `AI_REQUESTS_PER_MINUTE` | `15` | Application-side AI request guard |
+| `AI_CACHE_TTL` | `30m` | Redis AI response cache TTL |
+| `GEMINI_CONNECT_TIMEOUT` | `5s` | Gemini connection timeout |
+| `GEMINI_READ_TIMEOUT` | `25s` | Gemini response timeout |
+| `GEMINI_MAX_RETRIES` | `2` | Transient retries after initial attempt |
+| `GEMINI_RETRY_BACKOFF` | `400ms` | Base retry backoff |
+| `GEMINI_CIRCUIT_FAILURE_THRESHOLD` | `4` | Consecutive transient failures before opening circuit |
+| `GEMINI_CIRCUIT_OPEN_DURATION` | `30s` | Circuit open duration |
+| `REDIS_URL` | `redis://localhost:6379` | Redis connection |
+| `NEWS_CACHE_TTL` | `30m` | Search result cache TTL |
+| `NEWS_CONNECT_TIMEOUT_MS` | `10000` | News provider connection timeout |
+| `NEWS_READ_TIMEOUT_MS` | `20000` | News provider read timeout |
+| `NEWS_PROVIDER_TIMEOUT` | `35s` | Overall news-provider task timeout |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Allowed browser origin |
+| `SWAGGER_ENABLED` | `false` | Swagger UI toggle |
+
+## Failure behavior
+
+| Failure | Behavior |
+| --- | --- |
+| Guardian fails | NYT results can still be returned |
+| NYT fails | Guardian results can still be returned |
+| Both news providers fail | API returns a clear service-unavailable response |
+| Redis unavailable for news | Live provider calls continue |
+| Redis unavailable for AI | AI falls back to an uncached Gemini request |
+| Gemini returns `429`, `5xx`, or network failure | Retry with exponential backoff + jitter |
+| Gemini repeatedly fails transiently | Circuit opens temporarily and requests fail fast |
+| Gemini returns malformed structured content | Backend rejects the invalid AI response |
+| Gemini returns unknown citation IDs | Invalid source IDs are removed before response |
+| `AI_ENABLED=false` | AI is offline; core news remains available |
+| Missing Gemini key | AI status is disabled; the key is never exposed to React |
 
 ## Tests and builds
 
@@ -471,145 +619,111 @@ npm run build
 
 ## Docker
 
-The backend includes a multi-stage Dockerfile. Render builds the same Docker image used for production deployment.
-
-You can build it locally with:
+Build the backend image:
 
 ```bash
 cd backend
-docker build -t newsroom-intelligence-api .
+docker build -t news-intelligence-api .
 ```
 
-Then run it with the required environment variables and access the API on the exposed application port.
-
-Redis is intentionally external to the backend image so the application can use either a local Redis instance or Render Key Value without changing application code.
+Redis remains external to the image so the same backend can use local Redis or Render Key Value.
 
 ## Render deployment
 
-The root `render.yaml` defines the deployment as a Render Blueprint:
+The root `render.yaml` defines:
 
 | Service | Render type | Purpose |
 | --- | --- | --- |
 | `abhay123abhi-news-web` | Static Site | React build and `/api/*` rewrite |
 | `abhay123abhi-news-api` | Docker Web Service | Spring Boot API |
-| `abhay123abhi-news-cache` | Key Value | Redis-compatible cache |
+| `abhay123abhi-news-cache` | Key Value | Redis-compatible cache for news + AI responses |
 
-### Deploy from GitHub
-
-1. Push/merge the code to the branch you want to deploy.
-2. In Render select **New → Blueprint**.
-3. Connect this GitHub repository.
-4. Render reads `render.yaml` and creates the frontend, backend and Redis-compatible cache.
-5. Add secret values when prompted:
-   - `GUARDIAN_API_KEY`
-   - `NYT_API_KEY`
-   - `GEMINI_API_KEY`
-6. Keep:
+Add these secrets/configuration values in Render as required:
 
 ```text
+GUARDIAN_API_KEY=...
+NYT_API_KEY=...
+GEMINI_API_KEY=...
 AI_ENABLED=true
 GEMINI_MODEL=gemini-3.6-flash
-AI_REQUESTS_PER_MINUTE=15
+AI_CACHE_TTL=30m
 ```
 
-7. Deploy the Blueprint.
+The frontend uses the backend `/api/*` path and does not contain third-party API secrets.
 
-The frontend uses a same-origin `/api/*` rewrite to the Spring backend, so API secrets never need to be present in the React build.
+## Why this AI approach
 
-### Emergency AI switch
+This project does **not** train or host its own LLM. The Spring Boot backend integrates Gemini as a hosted LLM through its REST API.
 
-If AI quota, provider availability or another issue occurs in production, change the backend Render environment variable to:
+That is intentional:
 
 ```text
-AI_ENABLED=false
+Application responsibility
+    |
+    +--> aggregate trustworthy input
+    +--> construct bounded context
+    +--> define prompt contract
+    +--> cache repeated inference
+    +--> handle provider failure
+    +--> validate structured output
+    +--> validate source references
+    +--> present grounded results
+
+Gemini responsibility
+    |
+    +--> model inference / generation
 ```
 
-Redeploy/restart the backend.
+Spring AI is not currently used because direct `RestClient` integration is sufficient for the project's present inference use cases. RAG, embeddings, and a vector database are also intentionally omitted because the AI operates on a small current feed rather than a large historical corpus.
 
-No frontend code change is needed and the normal news product continues to work.
+Monitoring/metrics are intentionally outside the scope of this version.
 
-### Free-tier behavior
-
-The project was deliberately kept compatible with lightweight/free hosting:
-
-- Render web services may sleep after inactivity,
-- the first request after sleep can therefore be slower,
-- Redis cache content is disposable,
-- no Kubernetes cluster is required,
-- no PostgreSQL database is required,
-- no always-running scheduler is required,
-- no paid background worker is required.
-
-This is also why the current product uses user-driven retrieval rather than pretending an in-process scheduler can reliably refresh news every hour while a free instance is asleep.
-
-## Configuration
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `GUARDIAN_API_KEY` | empty | Guardian API authentication |
-| `NYT_API_KEY` | empty | NYT API authentication |
-| `GEMINI_API_KEY` | empty | Backend-only Gemini authentication |
-| `GEMINI_MODEL` | `gemini-3.6-flash` | AI model |
-| `AI_ENABLED` | `true` | Runtime AI feature switch |
-| `AI_REQUESTS_PER_MINUTE` | `15` | Backend AI request guard |
-| `REDIS_URL` | `redis://localhost:6379` | Redis connection |
-| `NEWS_CACHE_TTL` | `30m` | Search result cache lifetime |
-| `NEWS_CONNECT_TIMEOUT_MS` | `10000` | News provider connection timeout |
-| `NEWS_READ_TIMEOUT_MS` | `20000` | News provider read timeout |
-| `NEWS_PROVIDER_TIMEOUT` | `35s` | Overall provider task timeout |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000` | Allowed browser origin |
-| `SWAGGER_ENABLED` | `false` | Swagger UI toggle |
-
-## Failure behavior
-
-A few failure cases are handled intentionally rather than hidden:
-
-| Failure | Behavior |
-| --- | --- |
-| Guardian fails | NYT results can still be returned |
-| NYT fails | Guardian results can still be returned |
-| Both news providers fail | API returns a clear service-unavailable response |
-| Redis fails | live provider calls continue |
-| Gemini unavailable | AI request fails, core news still works |
-| `AI_ENABLED=false` | AI is offline; core news remains available |
-| Missing Gemini key | AI status is disabled; key is never exposed to frontend |
-
-## Why AI improves this project
-
-Without AI this is a reliable multi-source aggregator. With AI it becomes a small **news intelligence workspace**.
-
-The important difference is that the model is not asked a generic question against the open internet. It receives a bounded set of articles the application has already retrieved and is instructed to reason only over that evidence.
-
-That gives the AI features a clear product role:
+## Interview-level workflow summary
 
 ```text
-Aggregation answers: "What are the sources reporting?"
-
-AI brief answers: "What is important across this feed?"
-
-Ask the news answers: "What does this retrieved evidence say about my question?"
-
-Compare coverage answers: "Where do these publishers overlap or emphasize different details?"
+Guardian + NYT
+      |
+      v
+normalize + deduplicate
+      |
+      v
+current article set
+      |
+      v
+AiInsightService
+      |
+      +--> sanitize + bound context
+      +--> assign article source IDs
+      +--> build versioned cache key
+      |
+      v
+Redis AI cache
+   /      \
+ hit      miss
+ |          |
+ return     v
+       Gemini provider
+            |
+       timeout / retry
+       circuit breaker
+            |
+            v
+         Gemini
+            |
+            v
+      structured JSON
+            |
+            v
+      parse + validate
+            |
+            v
+     validate sourceIds
+            |
+            v
+       cache in Redis
+            |
+            v
+ React sections + clickable citations
 ```
 
-The next meaningful extension would be **story clustering**: group Guardian and NYT articles that describe the same event first, then run coverage comparison inside that cluster. That would make the comparison feature even more precise without changing the overall architecture.
-
-## Design trade-offs
-
-This is intentionally not a microservice system. For the current traffic, deployment target and feature set, a modular Spring Boot backend is easier to run and reason about.
-
-If the application needed significantly more traffic, likely next steps would be:
-
-- bounded Caffeine or Redis caching for AI results,
-- distributed rate limiting,
-- persistent user preferences,
-- background ingestion instead of only request-time aggregation,
-- search/index storage for larger news history,
-- event/topic clustering before AI comparison,
-- authentication if AI quota needs to be assigned per user.
-
-Those are scaling decisions, not requirements for the current version.
-
----
-
-Built as a practical exercise in **Java 21 concurrency, Spring Boot integration design, Redis caching, resilient external API orchestration, React UI, feature flags, and source-grounded AI**.
+This keeps the project focused on **Java 21 concurrency, Spring Boot integration design, Redis cache-aside patterns, resilient external API orchestration, structured LLM output, source-grounded generation, and a React-based AI workspace** without adding unnecessary frameworks or infrastructure.
