@@ -108,6 +108,75 @@
   opacity: .66;
 }
 
+/* Subtle electric trace that continuously travels around the AI workspace edge. */
+.premium-ai-stage .ai-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-ai-stage .ai-panel::before {
+  position: absolute;
+  inset: -1px;
+  z-index: 5;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 77%,
+    rgba(43, 200, 217, .05) 80%,
+    rgba(47, 212, 155, .48) 84%,
+    rgba(43, 200, 217, .72) 87%,
+    rgba(118, 87, 255, .22) 90%,
+    transparent 94% 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .52;
+  animation: workspaceCurrent 7.5s linear infinite;
+}
+
+:root[data-theme="dark"] .premium-ai-stage .ai-panel::before {
+  opacity: .62;
+}
+
+/* Make the existing background signal wires easier to notice, but still ambient. */
+.signal-line {
+  width: 300px;
+  height: 2px;
+  opacity: .62;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(47, 212, 155, .08) 18%,
+    rgba(47, 212, 155, .72) 48%,
+    rgba(43, 200, 217, .60) 58%,
+    transparent 100%
+  );
+  filter: drop-shadow(0 0 6px rgba(47, 212, 155, .24));
+}
+
+.signal-one {
+  animation-duration: 5.8s;
+}
+
+.signal-two {
+  animation-duration: 6.6s;
+}
+
+:root[data-theme="dark"] .signal-line {
+  opacity: .72;
+  filter: drop-shadow(0 0 8px rgba(47, 212, 155, .30));
+}
+
+@keyframes workspaceCurrent {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 720px) {
   .ambient-grid {
     opacity: .16;
@@ -116,11 +185,18 @@
   .ai-stage-halo {
     opacity: .58;
   }
+
+  .signal-line {
+    width: 240px;
+    opacity: .46;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .source-chip::before,
-  .premium-ai-stage .ai-panel::after {
+  .premium-ai-stage .ai-panel::after,
+  .premium-ai-stage .ai-panel::before,
+  .signal-line {
     animation: none !important;
   }
 }
