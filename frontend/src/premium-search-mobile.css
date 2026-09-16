@@ -1,0 +1,360 @@
+/* Premium search and mobile view polish layered after the main premium AI styles. */
+
+.mobile-view-switcher {
+  display: none;
+}
+
+.search-form {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 24px;
+  transition:
+    transform .28s ease,
+    border-color .28s ease,
+    box-shadow .28s ease,
+    background .28s ease;
+}
+
+.search-form::before {
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 78%,
+    rgba(43, 200, 217, .06) 82%,
+    rgba(47, 212, 155, .42) 85%,
+    rgba(118, 87, 255, .68) 88%,
+    rgba(43, 200, 217, .18) 92%,
+    transparent 96% 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .56;
+  animation: searchTraceRotate 8.4s linear infinite;
+}
+
+.search-form::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 14% 50%, rgba(43, 200, 217, .10), transparent 22%),
+    radial-gradient(circle at 84% 50%, rgba(118, 87, 255, .18), transparent 24%);
+  opacity: .88;
+  animation: searchSurfaceDrift 6.5s ease-in-out infinite;
+}
+
+.search-form > * {
+  position: relative;
+  z-index: 1;
+}
+
+.search-form input,
+.page-size select,
+.search-form > button,
+.quick-topics button {
+  transition:
+    transform .22s ease,
+    border-color .22s ease,
+    background .22s ease,
+    box-shadow .22s ease,
+    color .22s ease;
+}
+
+.search-form:focus-within {
+  transform: translateY(-1px);
+}
+
+.search-form input,
+.page-size select {
+  background: transparent;
+}
+
+.search-form > button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 14px;
+}
+
+.search-form > button::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(110deg, transparent 18%, rgba(255,255,255,.08) 38%, rgba(255,255,255,.24) 50%, rgba(255,255,255,.08) 62%, transparent 82%);
+  transform: translateX(-130%);
+  animation: searchButtonSweep 4.4s ease-in-out infinite;
+}
+
+.quick-topics button {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-topics button.selected {
+  animation: selectedTopicGlow 3.2s ease-in-out infinite;
+}
+
+@media (hover: hover) {
+  .search-form:hover {
+    transform: translateY(-2px);
+  }
+
+  .search-form > button:hover:not(:disabled),
+  .quick-topics button:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+}
+
+:root[data-theme="dark"] .search-form {
+  border-color: rgba(103, 113, 163, .26);
+  background: linear-gradient(135deg, rgba(10, 18, 35, .88), rgba(10, 22, 46, .82));
+  box-shadow:
+    0 20px 48px rgba(0,0,0,.30),
+    0 0 0 1px rgba(255,255,255,.02) inset,
+    0 0 44px rgba(43, 200, 217, .05);
+}
+
+:root[data-theme="dark"] .search-icon,
+:root[data-theme="dark"] .search-form input {
+  color: #eef1f7;
+}
+
+:root[data-theme="dark"] .search-form input::placeholder {
+  color: #8390a8;
+}
+
+:root[data-theme="dark"] .page-size select {
+  color: #a6b0c2;
+  border-left-color: rgba(255, 255, 255, .10);
+}
+
+:root[data-theme="dark"] .search-form > button {
+  background: linear-gradient(135deg, #6f63ff, #4e46dc);
+  box-shadow: 0 16px 34px rgba(84, 76, 212, .34), inset 0 1px 0 rgba(255,255,255,.14);
+}
+
+:root:not([data-theme="dark"]) .search-form {
+  border-color: rgba(91, 86, 155, .16);
+  background: linear-gradient(135deg, rgba(255,255,255,.90), rgba(247,248,255,.88));
+  box-shadow:
+    0 20px 46px rgba(47, 53, 88, .10),
+    inset 0 1px 0 rgba(255,255,255,.94),
+    0 0 34px rgba(43, 200, 217, .05);
+  backdrop-filter: blur(16px) saturate(120%);
+}
+
+:root:not([data-theme="dark"]) .search-form > button {
+  background: linear-gradient(135deg, #6f63ff, #5a52e3);
+  box-shadow: 0 14px 28px rgba(92, 80, 202, .20), inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+@media (max-width: 720px) {
+  .mobile-view-switcher {
+    position: sticky;
+    top: 62px;
+    z-index: 24;
+    display: block;
+    padding: 12px 18px 0;
+    backdrop-filter: blur(16px);
+  }
+
+  :root[data-theme="dark"] .mobile-view-switcher {
+    background: linear-gradient(180deg, rgba(8, 12, 20, .94), rgba(8, 12, 20, .72));
+  }
+
+  :root:not([data-theme="dark"]) .mobile-view-switcher {
+    background: linear-gradient(180deg, rgba(251, 251, 255, .94), rgba(251, 251, 255, .72));
+  }
+
+  .mobile-view-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 7px;
+    border-radius: 18px;
+  }
+
+  :root[data-theme="dark"] .mobile-view-tabs {
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(16, 22, 34, .76);
+    box-shadow: 0 14px 34px rgba(0,0,0,.22);
+  }
+
+  :root:not([data-theme="dark"]) .mobile-view-tabs {
+    border: 1px solid rgba(91, 86, 155, .10);
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 14px 34px rgba(40, 48, 76, .10);
+  }
+
+  .mobile-view-tab {
+    display: grid;
+    gap: 3px;
+    padding: 11px 12px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 800;
+    background: transparent;
+  }
+
+  .mobile-view-tab small {
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  :root[data-theme="dark"] .mobile-view-tab {
+    color: #c5cede;
+  }
+
+  :root[data-theme="dark"] .mobile-view-tab small {
+    color: #8490a7;
+  }
+
+  :root[data-theme="dark"] .mobile-view-tab.active {
+    color: #fff;
+    border-color: rgba(118, 87, 255, .38);
+    background: linear-gradient(135deg, rgba(118, 87, 255, .24), rgba(43, 200, 217, .12));
+    box-shadow: 0 12px 24px rgba(56, 50, 125, .20);
+  }
+
+  :root:not([data-theme="dark"]) .mobile-view-tab {
+    color: #324058;
+  }
+
+  :root:not([data-theme="dark"]) .mobile-view-tab small {
+    color: #6f7891;
+  }
+
+  :root:not([data-theme="dark"]) .mobile-view-tab.active {
+    color: #1d2640;
+    border-color: rgba(118, 87, 255, .26);
+    background: linear-gradient(135deg, rgba(118, 87, 255, .16), rgba(43, 200, 217, .08));
+    box-shadow: 0 12px 24px rgba(72, 63, 145, .12);
+  }
+
+  .mobile-view-note {
+    margin: 9px 4px 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .app-shell.mobile-view-discover .hero-ai {
+    display: none;
+  }
+
+  .app-shell.mobile-view-ai .hero-copy-block,
+  .app-shell.mobile-view-ai .content {
+    display: none;
+  }
+
+  .app-shell.mobile-view-ai .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 24px;
+    padding-bottom: 38px;
+  }
+
+  .app-shell.mobile-view-ai .premium-ai-stage {
+    width: 100%;
+  }
+
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel {
+    position: static;
+  }
+
+  .app-shell.mobile-view-discover .hero {
+    padding-bottom: 28px;
+  }
+
+  .search-form {
+    gap: 0;
+    padding: 8px;
+    border-radius: 22px;
+  }
+
+  .search-form::before {
+    opacity: .38;
+    animation-duration: 10s;
+  }
+
+  .search-form::after {
+    opacity: .58;
+  }
+
+  .page-size select,
+  .search-form > button {
+    min-height: 44px;
+  }
+
+  .quick-topics {
+    row-gap: 9px;
+  }
+
+  .quick-topics button {
+    min-height: 34px;
+  }
+}
+
+@media (max-width: 430px) {
+  .mobile-view-switcher {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .mobile-view-tabs {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .mobile-view-tab {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .mobile-view-tab small {
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-form::before,
+  .search-form::after,
+  .search-form > button::after,
+  .quick-topics button.selected {
+    animation: none !important;
+  }
+}
+
+@keyframes searchTraceRotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes searchSurfaceDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(10px, -4px, 0) scale(1.02); }
+}
+
+@keyframes searchButtonSweep {
+  0%, 72%, 100% { transform: translateX(-130%); }
+  86% { transform: translateX(130%); }
+}
+
+@keyframes selectedTopicGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(118, 87, 255, .12); }
+  50% { box-shadow: 0 0 0 6px rgba(118, 87, 255, 0); }
+}
