@@ -8,6 +8,7 @@ import "./ai-first.css";
 import "./discover-refresh.css";
 import "./premium-ai.css";
 import "./premium-ai-polish.css";
+import "./premium-search-mobile.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -25,6 +26,7 @@ function labelForTopic(topic) {
 
 export default function App() {
   const [theme, setTheme] = useState(getSavedTheme);
+  const [mobileView, setMobileView] = useState("discover");
   const [search, setSearch] = useState({ keyword: DEFAULT_QUERY, pageSize: DEFAULT_PAGE_SIZE });
   const [data, setData] = useState({ articles: [], page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -73,11 +75,27 @@ export default function App() {
     [data.articles]
   );
 
-  const handleSearch = (keyword, pageSize) => loadNews(keyword, 1, pageSize);
-  const handlePageChange = (page) => loadNews(search.keyword, page, search.pageSize);
-  const handleTopicChange = (topic) => loadNews(topic, 1, search.pageSize);
+  const mobileViewNote = useMemo(
+    () => mobileView === "discover"
+      ? "Search, filter, and browse the latest stories in one focused feed."
+      : "Generate a brief, ask grounded questions, and compare coverage from the current feed.",
+    [mobileView]
+  );
 
-  return <div className="app-shell">
+  const handleSearch = (keyword, pageSize) => {
+    setMobileView("discover");
+    loadNews(keyword, 1, pageSize);
+  };
+  const handlePageChange = (page) => {
+    setMobileView("discover");
+    loadNews(search.keyword, page, search.pageSize);
+  };
+  const handleTopicChange = (topic) => {
+    setMobileView("discover");
+    loadNews(topic, 1, search.pageSize);
+  };
+
+  return <div className={`app-shell mobile-view-${mobileView}`}>
     <header className="site-header">
       <nav className="topbar" aria-label="Primary navigation">
         <a className="brand" href="/" aria-label="Newsroom home">
@@ -96,6 +114,20 @@ export default function App() {
     </header>
 
     <main>
+      <section className="mobile-view-switcher" aria-label="Mobile workspace switcher">
+        <div className="mobile-view-tabs" role="tablist" aria-label="Choose a mobile view">
+          <button type="button" role="tab" aria-selected={mobileView === "discover"} className={`mobile-view-tab ${mobileView === "discover" ? "active" : ""}`} onClick={() => setMobileView("discover")}>
+            <span>Discover</span>
+            <small>Search + news</small>
+          </button>
+          <button type="button" role="tab" aria-selected={mobileView === "ai"} className={`mobile-view-tab ${mobileView === "ai" ? "active" : ""}`} onClick={() => setMobileView("ai")}>
+            <span>AI workspace</span>
+            <small>Brief + Q&amp;A</small>
+          </button>
+        </div>
+        <p className="mobile-view-note">{mobileViewNote}</p>
+      </section>
+
       <section className="hero premium-hero">
         <div className="hero-ambient" aria-hidden="true">
           <span className="ambient-orb orb-one" />
