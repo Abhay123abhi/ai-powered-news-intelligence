@@ -13,6 +13,10 @@ public record AiResponse(
         citations = citations == null ? List.of() : List.copyOf(citations);
     }
 
+    public AiResponse withCached(boolean cached) {
+        return new AiResponse(text, content, citations, model, cached);
+    }
+
     public record Content(List<Section> sections) {
         public Content {
             sections = sections == null ? List.of() : List.copyOf(sections);
