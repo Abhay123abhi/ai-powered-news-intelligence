@@ -1,5 +1,11 @@
 /* Premium search and mobile view polish layered after the main premium AI styles. */
 
+@property --search-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .mobile-view-switcher {
   display: none;
 }
@@ -16,7 +22,7 @@
     background .28s ease;
 }
 
-/* Quiet premium edge while idle. The fast clockwise trace only runs during a request. */
+/* Fixed border layer. Only the gradient angle moves, so the trace stays on the perimeter. */
 .search-form::before {
   position: absolute;
   inset: -1px;
@@ -25,29 +31,32 @@
   border-radius: inherit;
   pointer-events: none;
   content: "";
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 80%,
-    rgba(43, 200, 217, .10) 84%,
-    rgba(47, 212, 155, .34) 87%,
-    rgba(118, 87, 255, .58) 90%,
-    transparent 95% 100%
-  );
+  background: linear-gradient(135deg, rgba(43, 200, 217, .14), rgba(118, 87, 255, .30));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: .22;
-  transform: rotate(0deg);
+  opacity: .30;
 }
 
+/* Clockwise outer-border runner while a search request is active. */
 .search-form.is-searching::before {
-  opacity: .95;
-  filter: drop-shadow(0 0 7px rgba(118, 87, 255, .34));
-  animation: searchTraceRotate 1.15s linear infinite;
+  --search-angle: 0deg;
+  background: conic-gradient(
+    from var(--search-angle),
+    transparent 0 82%,
+    rgba(43, 200, 217, .12) 86%,
+    rgba(47, 212, 155, .72) 89%,
+    rgba(118, 87, 255, 1) 92%,
+    rgba(43, 200, 217, .52) 95%,
+    transparent 98% 100%
+  );
+  opacity: 1;
+  animation: searchBorderOrbit 1.1s linear infinite;
 }
 
+/* Static ambient depth only; no moving light inside the form. */
 .search-form::after {
   position: absolute;
   inset: 0;
@@ -55,10 +64,9 @@
   pointer-events: none;
   content: "";
   background:
-    radial-gradient(circle at 14% 50%, rgba(43, 200, 217, .10), transparent 22%),
-    radial-gradient(circle at 84% 50%, rgba(118, 87, 255, .18), transparent 24%);
-  opacity: .78;
-  animation: searchSurfaceDrift 6.5s ease-in-out infinite;
+    radial-gradient(circle at 14% 50%, rgba(43, 200, 217, .08), transparent 22%),
+    radial-gradient(circle at 84% 50%, rgba(118, 87, 255, .12), transparent 24%);
+  opacity: .62;
 }
 
 .search-form > * {
@@ -83,18 +91,17 @@
 }
 
 .search-form.is-searching {
-  border-color: rgba(118, 87, 255, .42);
+  border-color: rgba(118, 87, 255, .34);
   box-shadow:
     0 24px 56px rgba(43, 38, 111, .16),
-    0 0 28px rgba(43, 200, 217, .09),
-    inset 0 1px 0 rgba(255,255,255,.06);
+    0 0 26px rgba(43, 200, 217, .08),
+    inset 0 1px 0 rgba(255,255,255,.05);
 }
 
 .search-form input {
   background: transparent;
 }
 
-/* Premium story-count selector instead of the flat native white control. */
 .page-size {
   position: relative;
   display: flex;
@@ -141,10 +148,10 @@
   border-radius: 14px;
 }
 
-/* Remove the old left/right white sweep. */
 .search-form > button::after {
   display: none;
   content: none;
+  animation: none;
 }
 
 .quick-topics button {
@@ -197,8 +204,7 @@
   color: #b4bfd1;
   color-scheme: dark;
   border-color: rgba(255,255,255,.07);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.045), rgba(118,87,255,.055));
+  background: linear-gradient(135deg, rgba(255,255,255,.045), rgba(118,87,255,.055));
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.025),
     0 6px 16px rgba(0,0,0,.08);
@@ -208,8 +214,7 @@
 :root[data-theme="dark"] .page-size select:focus {
   color: #eef1f7;
   border-color: rgba(118,87,255,.26);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.065), rgba(118,87,255,.10));
+  background: linear-gradient(135deg, rgba(255,255,255,.065), rgba(118,87,255,.10));
   box-shadow: 0 0 0 3px rgba(118,87,255,.07);
 }
 
@@ -241,8 +246,7 @@
   color: #566079;
   color-scheme: light;
   border-color: rgba(71, 78, 115, .10);
-  background:
-    linear-gradient(135deg, rgba(248,249,255,.96), rgba(240,243,253,.90));
+  background: linear-gradient(135deg, rgba(248,249,255,.96), rgba(240,243,253,.90));
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.88),
     0 6px 16px rgba(43, 49, 78, .04);
@@ -252,8 +256,7 @@
 :root:not([data-theme="dark"]) .page-size select:focus {
   color: #2f3650;
   border-color: rgba(118,87,255,.24);
-  background:
-    linear-gradient(135deg, #ffffff, #f1f1ff);
+  background: linear-gradient(135deg, #ffffff, #f1f1ff);
   box-shadow: 0 0 0 3px rgba(118,87,255,.06);
 }
 
@@ -394,16 +397,16 @@
   }
 
   .search-form::before {
-    opacity: .18;
+    opacity: .22;
   }
 
   .search-form.is-searching::before {
-    opacity: .85;
-    animation-duration: 1.35s;
+    opacity: .95;
+    animation-duration: 1.3s;
   }
 
   .search-form::after {
-    opacity: .52;
+    opacity: .46;
   }
 
   .page-size {
@@ -452,19 +455,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .search-form::before,
-  .search-form::after,
   .quick-topics button.selected {
     animation: none !important;
   }
 }
 
-@keyframes searchTraceRotate {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes searchSurfaceDrift {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(10px, -4px, 0) scale(1.02); }
+@keyframes searchBorderOrbit {
+  to { --search-angle: 360deg; }
 }
 
 @keyframes selectedTopicGlow {
