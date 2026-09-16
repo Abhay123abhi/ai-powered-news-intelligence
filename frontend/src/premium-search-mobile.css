@@ -1,11 +1,5 @@
 /* Premium search and mobile view polish layered after the main premium AI styles. */
 
-@property --search-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .mobile-view-switcher {
   display: none;
 }
@@ -22,51 +16,42 @@
     background .28s ease;
 }
 
-/* Fixed border layer. Only the gradient angle moves, so the trace stays on the perimeter. */
+/* Premium static edge; loading motion now lives inside the form. */
 .search-form::before {
-  position: absolute;
-  inset: -1px;
-  z-index: 0;
-  padding: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  content: "";
-  background: linear-gradient(135deg, rgba(43, 200, 217, .14), rgba(118, 87, 255, .30));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: .30;
-}
-
-/* Clockwise outer-border runner while a search request is active. */
-.search-form.is-searching::before {
-  --search-angle: 0deg;
-  background: conic-gradient(
-    from var(--search-angle),
-    transparent 0 82%,
-    rgba(43, 200, 217, .12) 86%,
-    rgba(47, 212, 155, .72) 89%,
-    rgba(118, 87, 255, 1) 92%,
-    rgba(43, 200, 217, .52) 95%,
-    transparent 98% 100%
-  );
-  opacity: 1;
-  animation: searchBorderOrbit 1.1s linear infinite;
-}
-
-/* Static ambient depth only; no moving light inside the form. */
-.search-form::after {
   position: absolute;
   inset: 0;
   z-index: 0;
+  border-radius: inherit;
   pointer-events: none;
   content: "";
+  box-shadow:
+    inset 0 0 0 1px rgba(118, 87, 255, .16),
+    inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+/* Soft aurora field inside the form; only animates while searching. */
+.search-form::after {
+  position: absolute;
+  inset: -34% -16%;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  opacity: .18;
   background:
-    radial-gradient(circle at 14% 50%, rgba(43, 200, 217, .08), transparent 22%),
-    radial-gradient(circle at 84% 50%, rgba(118, 87, 255, .12), transparent 24%);
-  opacity: .62;
+    radial-gradient(ellipse at 24% 50%, rgba(43, 200, 217, .15), transparent 30%),
+    radial-gradient(ellipse at 58% 50%, rgba(118, 87, 255, .18), transparent 34%),
+    radial-gradient(ellipse at 82% 50%, rgba(47, 212, 155, .10), transparent 26%);
+  filter: blur(10px);
+  transform: translate3d(-6%, 0, 0) scale(1.02);
+}
+
+.search-form.is-searching::after {
+  opacity: .78;
+  background:
+    radial-gradient(ellipse at 22% 50%, rgba(43, 200, 217, .28), transparent 28%),
+    radial-gradient(ellipse at 54% 50%, rgba(118, 87, 255, .34), transparent 32%),
+    radial-gradient(ellipse at 82% 50%, rgba(47, 212, 155, .22), transparent 26%);
+  animation: searchAuroraFlow 2.9s cubic-bezier(.45,0,.55,1) infinite alternate;
 }
 
 .search-form > * {
@@ -91,15 +76,23 @@
 }
 
 .search-form.is-searching {
-  border-color: rgba(118, 87, 255, .34);
+  border-color: rgba(118, 87, 255, .32);
   box-shadow:
-    0 24px 56px rgba(43, 38, 111, .16),
-    0 0 26px rgba(43, 200, 217, .08),
+    0 24px 56px rgba(43, 38, 111, .15),
+    0 0 34px rgba(43, 200, 217, .08),
     inset 0 1px 0 rgba(255,255,255,.05);
 }
 
 .search-form input {
   background: transparent;
+}
+
+.search-icon {
+  transition: transform .22s ease, color .22s ease, filter .22s ease;
+}
+
+.search-form.is-searching .search-icon {
+  animation: searchIconPulse 1.65s ease-in-out infinite;
 }
 
 .page-size {
@@ -154,6 +147,10 @@
   animation: none;
 }
 
+.search-form.is-searching > button {
+  animation: searchButtonBreath 1.7s ease-in-out infinite;
+}
+
 .quick-topics button {
   position: relative;
   overflow: hidden;
@@ -185,6 +182,11 @@
     0 20px 48px rgba(0,0,0,.30),
     0 0 0 1px rgba(255,255,255,.02) inset,
     0 0 44px rgba(43, 200, 217, .05);
+}
+
+:root[data-theme="dark"] .search-form.is-searching::after {
+  opacity: .82;
+  filter: blur(9px) saturate(115%);
 }
 
 :root[data-theme="dark"] .search-icon,
@@ -228,6 +230,11 @@
   box-shadow: 0 16px 34px rgba(84, 76, 212, .34), inset 0 1px 0 rgba(255,255,255,.14);
 }
 
+:root[data-theme="dark"] .search-form.is-searching .search-icon {
+  color: #65e4d5;
+  filter: drop-shadow(0 0 8px rgba(43, 200, 217, .34));
+}
+
 :root:not([data-theme="dark"]) .search-form {
   border-color: rgba(91, 86, 155, .16);
   background: linear-gradient(135deg, rgba(255,255,255,.90), rgba(247,248,255,.88));
@@ -236,6 +243,11 @@
     inset 0 1px 0 rgba(255,255,255,.94),
     0 0 34px rgba(43, 200, 217, .05);
   backdrop-filter: blur(16px) saturate(120%);
+}
+
+:root:not([data-theme="dark"]) .search-form.is-searching::after {
+  opacity: .58;
+  filter: blur(12px) saturate(105%);
 }
 
 :root:not([data-theme="dark"]) .page-size {
@@ -268,6 +280,11 @@
 :root:not([data-theme="dark"]) .search-form > button {
   background: linear-gradient(135deg, #6f63ff, #5a52e3);
   box-shadow: 0 14px 28px rgba(92, 80, 202, .20), inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+:root:not([data-theme="dark"]) .search-form.is-searching .search-icon {
+  color: #4e63d8;
+  filter: drop-shadow(0 0 7px rgba(118, 87, 255, .20));
 }
 
 @media (max-width: 720px) {
@@ -396,17 +413,22 @@
     border-radius: 22px;
   }
 
-  .search-form::before {
-    opacity: .22;
-  }
-
-  .search-form.is-searching::before {
-    opacity: .95;
-    animation-duration: 1.3s;
-  }
-
   .search-form::after {
-    opacity: .46;
+    inset: -42% -24%;
+    opacity: .12;
+  }
+
+  .search-form.is-searching::after {
+    opacity: .52;
+    animation-duration: 3.4s;
+  }
+
+  .search-form.is-searching .search-icon {
+    animation-duration: 1.9s;
+  }
+
+  .search-form.is-searching > button {
+    animation-duration: 2s;
   }
 
   .page-size {
@@ -454,14 +476,34 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .search-form::before,
+  .search-form::after,
+  .search-form.is-searching .search-icon,
+  .search-form.is-searching > button,
   .quick-topics button.selected {
     animation: none !important;
   }
 }
 
-@keyframes searchBorderOrbit {
-  to { --search-angle: 360deg; }
+@keyframes searchAuroraFlow {
+  0% {
+    transform: translate3d(-9%, -1%, 0) scale(1.01);
+  }
+  50% {
+    transform: translate3d(4%, 1%, 0) scale(1.06);
+  }
+  100% {
+    transform: translate3d(10%, -1%, 0) scale(1.03);
+  }
+}
+
+@keyframes searchIconPulse {
+  0%, 100% { transform: scale(1); opacity: .82; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes searchButtonBreath {
+  0%, 100% { box-shadow: 0 14px 28px rgba(92, 80, 202, .20), inset 0 1px 0 rgba(255,255,255,.13); }
+  50% { box-shadow: 0 18px 34px rgba(92, 80, 202, .28), 0 0 18px rgba(118,87,255,.12), inset 0 1px 0 rgba(255,255,255,.16); }
 }
 
 @keyframes selectedTopicGlow {
