@@ -38,7 +38,8 @@ public class NytClient implements NewsProviderClient {
         }
 
         try {
-            String sort = keyword == null || keyword.isBlank() ? "newest" : "relevance";
+            // NYT ranks by relevance by default when q is present. Only force newest for the unfiltered latest feed.
+            String sort = keyword == null || keyword.isBlank() ? "newest" : null;
             Map<String, Object> responseMap =
                     feignClient.search(keyword, Math.max(0, page - 1), sort, apiKey);
 
