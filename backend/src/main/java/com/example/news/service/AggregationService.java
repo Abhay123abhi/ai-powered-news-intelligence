@@ -23,6 +23,9 @@ public class AggregationService {
 
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final Set<String> SEARCH_STOP_WORDS = Set.of(
+            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "with"
+    );
 
     private final List<NewsProviderClient> providers;
     private final CacheService cacheService;
@@ -128,7 +131,11 @@ public class AggregationService {
             }
         }
 
-        // Providers return a page each. Pagination metadata therefore reflects this aggregated page.
+        Comparator<NewsArticle> resultOrder = "latest".equals(searchQuery)
+                ? newestFirst()
+                : keywordRelevanceOrder(searchQuery);
+
+        // Providers return a page each. Deduplicate first, then rank the merged page for the user's intent.
         List<NewsArticle> uniqueArticles = allArticles.stream()
                 .filter(a -> a.url() != null && !a.url().isBlank())
                 .collect(Collectors.toMap(
@@ -138,10 +145,7 @@ public class AggregationService {
                         LinkedHashMap::new
                 ))
                 .values().stream()
-                .sorted(Comparator.comparing(
-                        NewsArticle::publishedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())
-                ))
+                .sorted(resultOrder)
                 .limit(size)
                 .toList();
 
@@ -163,6 +167,58 @@ public class AggregationService {
                 timeTaken,
                 uniqueArticles
         );
+    }
+
+    private Comparator<NewsArticle> newestFirst() {
+        return Comparator.comparing(
+                NewsArticle::publishedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        );
+    }
+
+    private Comparator<NewsArticle> keywordRelevanceOrder(String query) {
+        return Comparator
+                .comparingInt((NewsArticle article) -> relevanceScore(article, query))
+                .reversed()
+                .thenComparing(newestFirst());
+    }
+
+    private int relevanceScore(NewsArticle article, String query) {
+        String title = normalizeText(article.title());
+        String description = normalizeText(article.description());
+        String normalizedQuery = normalizeText(query);
+        int score = 0;
+
+        if (!normalizedQuery.isBlank()) {
+            if (title.contains(normalizedQuery)) score += 12;
+            if (description.contains(normalizedQuery)) score += 6;
+        }
+
+        for (String term : searchTerms(normalizedQuery)) {
+            if (containsWord(title, term)) score += 4;
+            if (containsWord(description, term)) score += 2;
+        }
+
+        return score;
+    }
+
+    private List<String> searchTerms(String query) {
+        return Arrays.stream(query.split("\\s+"))
+                .map(term -> term.replaceAll("[^a-z0-9]", ""))
+                .filter(term -> term.length() >= 2)
+                .filter(term -> !SEARCH_STOP_WORDS.contains(term))
+                .distinct()
+                .toList();
+    }
+
+    private boolean containsWord(String text, String term) {
+        if (text.isBlank() || term.isBlank()) return false;
+        return Arrays.stream(text.split("[^a-z0-9]+"))
+                .anyMatch(term::equals);
+    }
+
+    private String normalizeText(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("\\s+", " ").trim();
     }
 
     private boolean isProviderEnabled(String providerName) {

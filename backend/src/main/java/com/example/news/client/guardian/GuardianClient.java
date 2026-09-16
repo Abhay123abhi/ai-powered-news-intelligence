@@ -38,11 +38,13 @@ public class GuardianClient implements NewsProviderClient {
         }
 
         try {
+            String orderBy = keyword == null || keyword.isBlank() ? "newest" : "relevance";
+
             Map<String, Object> response =
                     feignClient.search(
                             keyword, Math.max(page, 1),
                             pageSize, "thumbnail,trailText",
-                            "newest", "published", apiKey
+                            orderBy, "published", apiKey
                     );
 
             Map<String, Object> responseData = (Map<String, Object>) response.get("response");

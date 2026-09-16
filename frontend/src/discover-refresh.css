@@ -1,4 +1,4 @@
-/* Discover layout: one lead, one supporting story, then a compact news grid. */
+/* Discover hero layout: keep the lead and supporting story treatment compact and editorial. */
 
 .lead-layout {
   display: grid;
@@ -82,78 +82,18 @@
   letter-spacing: .12em;
 }
 
-.news-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.news-grid .story-card {
-  min-height: 0;
-  border-radius: 12px;
-}
-
-.news-grid .image-wrap {
-  height: 128px;
-}
-
-.news-grid .story-content {
-  padding: 12px;
-}
-
-.news-grid .story-meta {
-  gap: 7px;
-  margin-bottom: 8px;
-}
-
-.news-grid .story-meta time {
-  font-size: 8px;
-}
-
-.news-grid .source-pill {
-  padding: 4px 6px;
-  font-size: 7px;
-}
-
-.news-grid .story-content h3 {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: 16px;
-  line-height: 1.2;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.news-grid .story-description {
-  min-height: 0;
-  margin: 8px 0 11px;
-  font-size: 10px;
-  line-height: 1.45;
-  -webkit-line-clamp: 2;
-}
-
-.news-grid .read-link {
-  font-size: 8px;
-  letter-spacing: .05em;
-}
-
-:root[data-theme="dark"] .lead-layout .story-card,
-:root[data-theme="dark"] .news-grid .story-card {
+:root[data-theme="dark"] .lead-layout .story-card {
   border-color: #2c3544;
   background: linear-gradient(180deg, #131a25, #101620);
 }
 
-:root[data-theme="light"] .lead-layout .story-card,
-:root[data-theme="light"] .news-grid .story-card {
+:root[data-theme="light"] .lead-layout .story-card {
   background: linear-gradient(180deg, #fff, #fbfcfe);
 }
 
 @media (max-width: 1180px) {
   .lead-layout {
     grid-template-columns: minmax(0, 1.55fr) minmax(240px, .9fr);
-  }
-
-  .news-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -172,10 +112,6 @@
     height: 100%;
     min-height: 220px;
   }
-
-  .news-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 620px) {
@@ -192,17 +128,5 @@
   .supporting-story .image-wrap {
     height: 220px;
     min-height: 220px;
-  }
-
-  .news-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .news-grid .image-wrap {
-    height: 210px;
-  }
-
-  .news-grid .story-content h3 {
-    font-size: 18px;
   }
 }

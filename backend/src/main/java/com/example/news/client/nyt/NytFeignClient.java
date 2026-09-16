@@ -13,7 +13,7 @@ public interface NytFeignClient {
     Map<String, Object> search(
             @RequestParam(value = "q", required = false) String keyword,
             @RequestParam("page") int page,
-            @RequestParam("sort") String sort,
+            @RequestParam(value = "sort", required = false) String sort,
             @RequestParam("api-key") String apiKey
     );
 }

@@ -43,6 +43,27 @@ class NytClientTest {
     }
 
     @Test
+    void leavesSortUnsetSoNytUsesDefaultRelevanceForKeywordSearch() {
+        ReflectionTestUtils.setField(client, "apiKey", "nyt-key");
+        when(feignClient.search("climate", 0, null, "nyt-key"))
+                .thenReturn(Map.of("response", Map.of(
+                        "meta", Map.of("hits", 1),
+                        "docs", List.of(Map.of(
+                                "headline", Map.of("main", "Climate policy update"),
+                                "abstract", "Climate policy story",
+                                "web_url", "https://example.com/nyt-climate",
+                                "pub_date", "2026-09-16T11:00:00Z",
+                                "multimedia", List.of()
+                        ))
+                )));
+
+        NewsApiResult result = client.search("climate", 1, 10);
+
+        assertThat(result.articles()).hasSize(1);
+        verify(feignClient).search("climate", 0, null, "nyt-key");
+    }
+
+    @Test
     void reportsMissingApiKeyAsProviderFailure() {
         ReflectionTestUtils.setField(client, "apiKey", "");
 
