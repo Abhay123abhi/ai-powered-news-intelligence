@@ -1,6 +1,7 @@
 package com.example.news.controller;
 
 import com.example.news.ai.AiInsightService;
+import com.example.news.ai.AiResponse;
 import com.example.news.model.NewsArticle;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -26,27 +27,27 @@ public class AiController {
     }
 
     @PostMapping("/summary")
-    public ResponseEntity<AiInsightService.AiResult> summarize(@Valid @RequestBody ArticleRequest request) {
+    public ResponseEntity<AiResponse> summarize(@Valid @RequestBody ArticleRequest request) {
         return ResponseEntity.ok(aiInsightService.summarize(request.article()));
     }
 
     @PostMapping("/why-it-matters")
-    public ResponseEntity<AiInsightService.AiResult> whyItMatters(@Valid @RequestBody ArticleRequest request) {
+    public ResponseEntity<AiResponse> whyItMatters(@Valid @RequestBody ArticleRequest request) {
         return ResponseEntity.ok(aiInsightService.explainWhyItMatters(request.article()));
     }
 
     @PostMapping("/brief")
-    public ResponseEntity<AiInsightService.AiResult> brief(@Valid @RequestBody ArticlesRequest request) {
+    public ResponseEntity<AiResponse> brief(@Valid @RequestBody ArticlesRequest request) {
         return ResponseEntity.ok(aiInsightService.dailyBrief(request.articles()));
     }
 
     @PostMapping("/compare")
-    public ResponseEntity<AiInsightService.AiResult> compare(@Valid @RequestBody ArticlesRequest request) {
+    public ResponseEntity<AiResponse> compare(@Valid @RequestBody ArticlesRequest request) {
         return ResponseEntity.ok(aiInsightService.compare(request.articles()));
     }
 
     @PostMapping("/ask")
-    public ResponseEntity<AiInsightService.AiResult> ask(@Valid @RequestBody AskRequest request) {
+    public ResponseEntity<AiResponse> ask(@Valid @RequestBody AskRequest request) {
         return ResponseEntity.ok(aiInsightService.ask(request.question(), request.articles()));
     }
 

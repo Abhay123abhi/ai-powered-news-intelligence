@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import aiApi from "../api/aiApi";
 import "./AiWorkspace.css";
 
@@ -32,9 +32,50 @@ function cleanAiText(text) {
     .trim();
 }
 
+function StructuredInsight({ response }) {
+  const citationMap = useMemo(
+    () => new Map((response?.citations || []).map((citation) => [citation.id, citation])),
+    [response]
+  );
+
+  if (!response?.content?.sections?.length) {
+    return <div className="ai-insight-text">{cleanAiText(response?.text || "No AI response returned.")}</div>;
+  }
+
+  return <div className="ai-structured-insight">
+    {response.content.sections.map((section, sectionIndex) => <section className="ai-response-section" key={`${section.heading}-${sectionIndex}`}>
+      <h4>{section.heading}</h4>
+      <ul>
+        {(section.items || []).map((item, itemIndex) => <li key={`${item.text}-${itemIndex}`}>
+          <span>{item.text}</span>
+          {!!item.sourceIds?.length && <span className="ai-inline-sources" aria-label="Sources">
+            {item.sourceIds.map((sourceId) => {
+              const citation = citationMap.get(sourceId);
+              if (!citation?.url || citation.url === "Unavailable") return null;
+              return <a key={sourceId} href={citation.url} target="_blank" rel="noreferrer" title={citation.title}>
+                {citation.source || `Source ${sourceId}`}
+              </a>;
+            })}
+          </span>}
+        </li>)}
+      </ul>
+    </section>)}
+
+    {!!response.citations?.length && <div className="ai-citation-strip">
+      <span>Sources used</span>
+      <div>
+        {response.citations.map((citation) => citation.url && citation.url !== "Unavailable" ?
+          <a key={citation.id} href={citation.url} target="_blank" rel="noreferrer" title={citation.title}>
+            [{citation.id}] {citation.source}
+          </a> : null)}
+      </div>
+    </div>}
+  </div>;
+}
+
 export default function AiWorkspace({ articles }) {
   const [question, setQuestion] = useState("");
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [enabled, setEnabled] = useState(false);
@@ -58,12 +99,12 @@ export default function AiWorkspace({ articles }) {
   const run = async (label, action, { clearQuestion = false } = {}) => {
     if (!enabled || !articles?.length) return;
     setActiveLabel(label);
-    setResult("");
+    setResult(null);
     setLoading(true);
     setError("");
     try {
       const response = await action();
-      setResult(response.text || "No AI response returned.");
+      setResult(response || { text: "No AI response returned." });
       if (clearQuestion) setQuestion("");
     } catch (requestError) {
       setError(
@@ -114,7 +155,7 @@ export default function AiWorkspace({ articles }) {
         <div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel || "News intelligence"}</strong></div>
         {!loading && !error && <span className="ai-grounded-badge">Source grounded</span>}
       </div>
-      {loading ? <div className="ai-thinking"><span /><span /><span /><p>Analyzing the current stories…</p></div> : error ? <p className="ai-error">{error}</p> : <div className="ai-insight-text">{cleanAiText(result)}</div>}
+      {loading ? <div className="ai-thinking"><span /><span /><span /><p>Analyzing the current stories…</p></div> : error ? <p className="ai-error">{error}</p> : <StructuredInsight response={result} />}
     </section>}
   </aside>;
 }
