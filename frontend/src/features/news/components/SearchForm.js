@@ -13,7 +13,7 @@ export default function SearchForm({ initialKeyword, initialPageSize, onSearch, 
     if (cleanKeyword) onSearch(cleanKeyword, pageSize);
   }
 
-  return <form className="search-form" onSubmit={handleSubmit}>
+  return <form className={`search-form ${loading ? "is-searching" : ""}`} onSubmit={handleSubmit}>
     <label className="search-field" htmlFor="news-search">
       <span className="search-icon" aria-hidden="true">⌕</span>
       <span className="sr-only">Search news</span>
