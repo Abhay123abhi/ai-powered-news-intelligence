@@ -61,15 +61,6 @@ function StructuredInsight({ response }) {
       </ul>
     </section>)}
 
-    {!!response.citations?.length && <div className="ai-citation-strip">
-      <span>Sources used</span>
-      <div>
-        {response.citations.map((citation) => citation.url && citation.url !== "Unavailable" ?
-          <a key={citation.id} href={citation.url} target="_blank" rel="noreferrer" title={citation.title}>
-            [{citation.id}] {citation.source}
-          </a> : null)}
-      </div>
-    </div>}
   </div>;
 }
 
