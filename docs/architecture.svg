@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
   <title id="title">Newsroom Intelligence system architecture</title>
-  <desc id="desc">Architecture showing React frontend, Spring Boot backend, Redis cache, Guardian and New York Times providers, Gemini AI, feature flag, and Render deployment.</desc>
+  <desc id="desc">Architecture showing React, Spring Boot, Guardian and New York Times aggregation, Redis for news and AI caching, Gemini with timeout retry and circuit breaker protection, structured AI output, validated citations, and Render deployment.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0b1020"/>
@@ -34,90 +34,99 @@
   <circle cx="120" cy="820" r="220" fill="#20c889" opacity=".05"/>
 
   <text x="70" y="68" class="title">Newsroom Intelligence — System Architecture</text>
-  <text x="70" y="98" class="sub">Trusted news aggregation first, optional source-grounded AI as a separate capability.</text>
+  <text x="70" y="98" class="sub">Trusted news aggregation first, with Redis-backed, source-grounded Gemini intelligence as an optional layer.</text>
 
   <!-- Browser -->
-  <rect x="70" y="190" width="245" height="180" class="box" fill="#ffffff"/>
+  <rect x="70" y="190" width="245" height="190" class="box" fill="#ffffff"/>
   <text x="95" y="225" class="darkh">React 18 Frontend</text>
   <text x="95" y="254" class="darkt">Search + pagination</text>
   <text x="95" y="278" class="darkt">Guardian / NYT feed</text>
   <text x="95" y="302" class="darkt">AI Workspace</text>
-  <text x="95" y="326" class="darkt">Light / dark mode</text>
-  <rect x="95" y="340" width="118" height="22" rx="11" fill="#e9fff6"/>
-  <text x="108" y="355" style="font:700 10px Inter,Segoe UI,Arial,sans-serif;fill:#138a62">STATIC ON RENDER</text>
+  <text x="95" y="326" class="darkt">Structured sections</text>
+  <text x="95" y="350" class="darkt">Clickable source citations</text>
+  <rect x="95" y="360" width="118" height="22" rx="11" fill="#e9fff6"/>
+  <text x="108" y="375" style="font:700 10px Inter,Segoe UI,Arial,sans-serif;fill:#138a62">STATIC ON RENDER</text>
 
   <!-- Spring -->
-  <rect x="455" y="155" width="330" height="260" class="box" fill="url(#api)"/>
-  <text x="485" y="195" class="h">Spring Boot API · Java 21</text>
-  <text x="485" y="228" class="t">NewsController</text>
-  <text x="485" y="253" class="t">AggregationService</text>
-  <text x="485" y="278" class="t">CacheService</text>
-  <text x="485" y="303" class="t">AiController / AiInsightService</text>
-  <text x="485" y="328" class="t">Provider abstractions + validation</text>
-  <text x="485" y="353" class="t">Actuator health endpoints</text>
-  <rect x="485" y="373" width="180" height="24" rx="12" fill="#ffffff" opacity=".16"/>
-  <text x="500" y="389" style="font:700 10px Inter,Segoe UI,Arial,sans-serif;fill:#fff">DOCKER WEB SERVICE</text>
+  <rect x="455" y="145" width="345" height="285" class="box" fill="url(#api)"/>
+  <text x="485" y="185" class="h">Spring Boot API · Java 21</text>
+  <text x="485" y="218" class="t">NewsController / AggregationService</text>
+  <text x="485" y="243" class="t">AiController / AiInsightService</text>
+  <text x="485" y="268" class="t">Prompt grounding + input bounds</text>
+  <text x="485" y="293" class="t">Versioned AI cache-key generation</text>
+  <text x="485" y="318" class="t">Structured JSON parsing</text>
+  <text x="485" y="343" class="t">Source-ID citation validation</text>
+  <text x="485" y="368" class="t">Provider abstractions + validation</text>
+  <text x="485" y="393" class="t">Feature flag + request guard</text>
+  <rect x="485" y="405" width="180" height="24" rx="12" fill="#ffffff" opacity=".16"/>
+  <text x="500" y="421" style="font:700 10px Inter,Segoe UI,Arial,sans-serif;fill:#fff">DOCKER WEB SERVICE</text>
 
   <!-- Redis -->
-  <rect x="455" y="530" width="260" height="130" class="box" fill="#ef4444"/>
+  <rect x="455" y="530" width="300" height="155" class="box" fill="#ef4444"/>
   <text x="485" y="568" class="h">Redis</text>
   <text x="485" y="598" class="t">News search cache</text>
-  <text x="485" y="623" class="t">30-minute TTL</text>
-  <text x="485" y="646" class="s" style="fill:#fee2e2">Cache failure does not stop news</text>
+  <text x="485" y="623" class="t">AI response cache</text>
+  <text x="485" y="648" class="t">Configurable TTLs</text>
+  <text x="485" y="672" class="s" style="fill:#fee2e2">Cache outage degrades to live / uncached calls</text>
 
   <!-- External news -->
-  <rect x="930" y="145" width="360" height="205" class="box" fill="#11182a" stroke="#3e4b70"/>
-  <text x="960" y="181" class="h">News Provider Layer</text>
-  <rect x="960" y="205" width="140" height="105" rx="14" fill="url(#news)"/>
-  <text x="982" y="240" class="h">Guardian</text>
-  <text x="982" y="267" class="t">Feign adapter</text>
-  <text x="982" y="292" class="s" style="fill:#dceeff">Provider API</text>
-  <rect x="1120" y="205" width="140" height="105" rx="14" fill="#f3f0e8"/>
-  <text x="1142" y="240" class="darkh">NYT</text>
-  <text x="1142" y="267" class="darkt">Feign adapter</text>
-  <text x="1142" y="292" class="darkt">Article Search</text>
+  <rect x="935" y="135" width="365" height="210" class="box" fill="#11182a" stroke="#3e4b70"/>
+  <text x="965" y="171" class="h">News Provider Layer</text>
+  <rect x="965" y="198" width="140" height="108" rx="14" fill="url(#news)"/>
+  <text x="987" y="233" class="h">Guardian</text>
+  <text x="987" y="260" class="t">Feign adapter</text>
+  <text x="987" y="285" class="s" style="fill:#dceeff">Provider API</text>
+  <rect x="1125" y="198" width="140" height="108" rx="14" fill="#f3f0e8"/>
+  <text x="1147" y="233" class="darkh">NYT</text>
+  <text x="1147" y="260" class="darkt">Feign adapter</text>
+  <text x="1147" y="285" class="darkt">Article Search</text>
 
   <!-- AI -->
-  <rect x="900" y="485" width="390" height="250" class="box" fill="url(#ai)"/>
-  <text x="930" y="525" class="h">AI Intelligence Layer</text>
-  <text x="930" y="558" class="t">AiProvider abstraction</text>
-  <text x="930" y="583" class="t">Gemini 3.6 Flash</text>
-  <text x="930" y="608" class="t">Daily brief · Ask the news</text>
-  <text x="930" y="633" class="t">Compare coverage</text>
-  <text x="930" y="658" class="t">Prompt grounding + input limits</text>
-  <rect x="930" y="682" width="140" height="28" rx="14" fill="#0b1020" opacity=".28"/>
-  <text x="947" y="700" style="font:700 11px Inter,Segoe UI,Arial,sans-serif;fill:#fff">AI_ENABLED=true</text>
-  <rect x="1085" y="682" width="170" height="28" rx="14" fill="#0b1020" opacity=".16"/>
-  <text x="1102" y="700" style="font:700 11px Inter,Segoe UI,Arial,sans-serif;fill:#fff">15 req/min guard</text>
+  <rect x="875" y="465" width="425" height="275" class="box" fill="url(#ai)"/>
+  <text x="905" y="505" class="h">Gemini Intelligence Layer</text>
+  <text x="905" y="538" class="t">AiProvider → GeminiAiProvider</text>
+  <text x="905" y="563" class="t">Gemini model via REST</text>
+  <text x="905" y="588" class="t">Timeout + transient retry</text>
+  <text x="905" y="613" class="t">Exponential backoff + jitter</text>
+  <text x="905" y="638" class="t">Circuit breaker</text>
+  <text x="905" y="663" class="t">Structured JSON generation</text>
+  <text x="905" y="688" class="t">Daily brief · Ask · Compare</text>
+  <rect x="905" y="704" width="145" height="28" rx="14" fill="#0b1020" opacity=".28"/>
+  <text x="922" y="722" style="font:700 11px Inter,Segoe UI,Arial,sans-serif;fill:#fff">AI_ENABLED=true</text>
+  <rect x="1065" y="704" width="200" height="28" rx="14" fill="#0b1020" opacity=".16"/>
+  <text x="1082" y="722" style="font:700 11px Inter,Segoe UI,Arial,sans-serif;fill:#fff">SOURCE-GROUNDED</text>
 
   <!-- Render -->
-  <rect x="70" y="570" width="245" height="135" class="box" fill="#20c889"/>
-  <text x="95" y="608" class="h">Render Blueprint</text>
-  <text x="95" y="638" class="t">Static Site</text>
-  <text x="95" y="662" class="t">Docker Web Service</text>
-  <text x="95" y="686" class="t">Key Value / Redis</text>
+  <rect x="70" y="575" width="245" height="135" class="box" fill="#20c889"/>
+  <text x="95" y="613" class="h">Render Blueprint</text>
+  <text x="95" y="643" class="t">Static Site</text>
+  <text x="95" y="667" class="t">Docker Web Service</text>
+  <text x="95" y="691" class="t">Key Value / Redis</text>
 
   <!-- Connections -->
-  <path d="M315 275 C370 275 395 275 455 275" class="line"/>
-  <text x="345" y="257" class="label">/api</text>
+  <path d="M315 282 C370 282 400 282 455 282" class="line"/>
+  <text x="345" y="264" class="label">/api</text>
 
-  <path d="M785 240 C845 240 870 240 930 240" class="line"/>
-  <text x="824" y="221" class="label">CONCURRENT FETCH</text>
+  <path d="M800 232 C850 232 885 232 935 232" class="line"/>
+  <text x="833" y="214" class="label">CONCURRENT FETCH</text>
 
-  <path d="M590 415 C590 455 590 485 590 530" class="line"/>
-  <text x="606" y="477" class="label">CACHE-ASIDE</text>
+  <path d="M605 430 C605 465 605 495 605 530" class="line"/>
+  <text x="620" y="486" class="label">CACHE-ASIDE</text>
 
-  <path d="M785 330 C850 350 860 525 900 555" class="line"/>
-  <text x="809" y="420" class="label">AI REQUEST</text>
+  <path d="M755 604 C810 604 835 604 875 604" class="line"/>
+  <text x="774" y="584" class="label">AI CACHE MISS</text>
 
-  <path d="M900 615 C840 615 820 385 785 365" class="dash"/>
-  <text x="788" y="590" class="label">GROUNDED RESPONSE</text>
+  <path d="M875 660 C825 690 790 665 755 650" class="dash"/>
+  <text x="770" y="708" class="label">CACHE STRUCTURED RESPONSE</text>
 
-  <path d="M315 625 C365 590 405 565 455 565" class="dash"/>
-  <text x="327" y="574" class="label">MANAGED CACHE</text>
+  <path d="M875 545 C840 500 830 370 800 350" class="dash"/>
+  <text x="812" y="454" class="label">VALIDATED JSON + CITATIONS</text>
+
+  <path d="M315 635 C365 605 405 580 455 580" class="dash"/>
+  <text x="327" y="588" class="label">MANAGED REDIS</text>
 
   <!-- Footer principles -->
-  <rect x="70" y="790" width="1220" height="64" rx="16" fill="#ffffff" opacity=".055" stroke="#ffffff" stroke-opacity=".08"/>
+  <rect x="70" y="790" width="1230" height="64" rx="16" fill="#ffffff" opacity=".055" stroke="#ffffff" stroke-opacity=".08"/>
   <text x="95" y="817" class="label">DESIGN PRINCIPLE</text>
-  <text x="95" y="840" class="t">AI is optional. If Gemini is disabled or unavailable, aggregation, search, Redis caching and the normal news experience continue to work.</text>
+  <text x="95" y="840" class="t">AI is optional. Redis accelerates both news and AI requests; Gemini failures are contained, and only validated structured output reaches the UI.</text>
 </svg>
