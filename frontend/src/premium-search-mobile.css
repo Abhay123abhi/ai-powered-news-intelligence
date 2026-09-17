@@ -7,7 +7,7 @@
 .search-form {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 24px;
   transition:
     transform .28s ease,
@@ -16,42 +16,47 @@
     background .28s ease;
 }
 
-/* Premium static edge; loading motion now lives inside the form. */
-.search-form::before {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  content: "";
-  box-shadow:
-    inset 0 0 0 1px rgba(118, 87, 255, .16),
-    inset 0 1px 0 rgba(255,255,255,.035);
-}
-
-/* Soft aurora field inside the form; only animates while searching. */
+/* The loading stroke sits outside the form, with no fill over the controls. */
+.search-form::before,
 .search-form::after {
-  position: absolute;
-  inset: -34% -16%;
-  z-index: 0;
-  pointer-events: none;
-  content: "";
-  opacity: .18;
-  background:
-    radial-gradient(ellipse at 24% 50%, rgba(43, 200, 217, .15), transparent 30%),
-    radial-gradient(ellipse at 58% 50%, rgba(118, 87, 255, .18), transparent 34%),
-    radial-gradient(ellipse at 82% 50%, rgba(47, 212, 155, .10), transparent 26%);
-  filter: blur(10px);
-  transform: translate3d(-6%, 0, 0) scale(1.02);
+  content: none;
 }
 
-.search-form.is-searching::after {
-  opacity: .78;
-  background:
-    radial-gradient(ellipse at 22% 50%, rgba(43, 200, 217, .28), transparent 28%),
-    radial-gradient(ellipse at 54% 50%, rgba(118, 87, 255, .34), transparent 32%),
-    radial-gradient(ellipse at 82% 50%, rgba(47, 212, 155, .22), transparent 26%);
-  animation: searchAuroraFlow 2.9s cubic-bezier(.45,0,.55,1) infinite alternate;
+.search-form > .search-border {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.search-border rect {
+  x: 2px;
+  y: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  rx: 26px;
+  fill: none;
+  stroke: #7657ff;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-dasharray: 16 84;
+}
+
+.search-border .search-border-head {
+  stroke: #2bc8d9;
+  stroke-dasharray: 4 96;
+}
+
+.search-form.is-searching > .search-border {
+  opacity: 1;
+}
+
+.search-form.is-searching .search-border rect {
+  animation: searchBorderTravel 2.4s linear infinite;
 }
 
 .search-form > * {
@@ -89,10 +94,6 @@
 
 .search-icon {
   transition: transform .22s ease, color .22s ease, filter .22s ease;
-}
-
-.search-form.is-searching .search-icon {
-  animation: searchIconPulse 1.65s ease-in-out infinite;
 }
 
 .page-size {
@@ -139,6 +140,39 @@
   overflow: hidden;
   isolation: isolate;
   border-radius: 14px;
+  min-width: 146px;
+  min-height: 48px;
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.search-submit-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  font-size: 18px;
+  transition: transform .22s ease;
+}
+
+.search-form > button:hover:not(:disabled) .search-submit-icon {
+  transform: translateX(3px);
+}
+
+.search-form > button:focus-visible {
+  outline: 2px solid #2bc8d9;
+  outline-offset: 3px;
+}
+
+.search-form > button:disabled {
+  cursor: not-allowed;
+}
+
+.search-form.is-searching > button:disabled {
+  opacity: 1;
+  cursor: wait;
 }
 
 .search-form > button::after {
@@ -182,11 +216,6 @@
     0 20px 48px rgba(0,0,0,.30),
     0 0 0 1px rgba(255,255,255,.02) inset,
     0 0 44px rgba(43, 200, 217, .05);
-}
-
-:root[data-theme="dark"] .search-form.is-searching::after {
-  opacity: .82;
-  filter: blur(9px) saturate(115%);
 }
 
 :root[data-theme="dark"] .search-icon,
@@ -243,11 +272,6 @@
     inset 0 1px 0 rgba(255,255,255,.94),
     0 0 34px rgba(43, 200, 217, .05);
   backdrop-filter: blur(16px) saturate(120%);
-}
-
-:root:not([data-theme="dark"]) .search-form.is-searching::after {
-  opacity: .58;
-  filter: blur(12px) saturate(105%);
 }
 
 :root:not([data-theme="dark"]) .page-size {
@@ -413,18 +437,8 @@
     border-radius: 22px;
   }
 
-  .search-form::after {
-    inset: -42% -24%;
-    opacity: .12;
-  }
-
-  .search-form.is-searching::after {
-    opacity: .52;
-    animation-duration: 3.4s;
-  }
-
-  .search-form.is-searching .search-icon {
-    animation-duration: 1.9s;
+  .search-border rect {
+    rx: 24px;
   }
 
   .search-form.is-searching > button {
@@ -476,29 +490,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .search-form::after,
-  .search-form.is-searching .search-icon,
+  .search-form.is-searching .search-border rect,
+  .search-form .button-loader,
   .search-form.is-searching > button,
   .quick-topics button.selected {
     animation: none !important;
   }
 }
 
-@keyframes searchAuroraFlow {
-  0% {
-    transform: translate3d(-9%, -1%, 0) scale(1.01);
-  }
-  50% {
-    transform: translate3d(4%, 1%, 0) scale(1.06);
-  }
-  100% {
-    transform: translate3d(10%, -1%, 0) scale(1.03);
-  }
-}
-
-@keyframes searchIconPulse {
-  0%, 100% { transform: scale(1); opacity: .82; }
-  50% { transform: scale(1.08); opacity: 1; }
+@keyframes searchBorderTravel {
+  to { stroke-dashoffset: -100; }
 }
 
 @keyframes searchButtonBreath {
