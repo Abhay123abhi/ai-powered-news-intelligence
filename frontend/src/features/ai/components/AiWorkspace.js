@@ -16,9 +16,9 @@ function DisabledAiWorkspace() {
       <p className="ai-intro">AI is off right now. Search and publisher results still work normally.</p>
     </div>
     <div className="ai-controls disabled-controls">
-      <div className="ai-feature"><span>01</span><div><strong>Daily brief</strong><p>Pull the important developments into one view.</p></div></div>
-      <div className="ai-feature"><span>02</span><div><strong>Compare coverage</strong><p>See how publishers emphasize the same story.</p></div></div>
-      <div className="ai-feature"><span>03</span><div><strong>Ask the news</strong><p>Question only the articles already in your feed.</p></div></div>
+      <div className="ai-feature"><div><strong>Daily brief</strong><p>Pull distinct developments into one concise view.</p></div></div>
+      <div className="ai-feature"><div><strong>Ask the news</strong><p>Question only the articles already in your feed.</p></div></div>
+      <div className="ai-feature"><div><strong>Compare coverage</strong><p>Compare publishers only when the feed contains comparable coverage.</p></div></div>
     </div>
     <div className="ai-foundation"><span aria-hidden="true">✓</span><p><strong>Graceful fallback</strong><br />Set AI_ENABLED=true to bring the workspace back online.</p></div>
   </aside>;
@@ -126,25 +126,22 @@ export default function AiWorkspace({ articles }) {
 
     <div className="ai-controls">
       <div className="ai-feature ai-action">
-        <span>01</span>
-        <div><strong>Daily brief</strong><p>Pull the important developments into one concise view.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Daily brief", () => aiApi.brief(articles))}>Create brief</button></div>
+        <div><strong>Daily brief</strong><p>Pull distinct developments into one concise view.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Daily brief", () => aiApi.brief(articles))}>Create brief</button></div>
       </div>
 
       <div className="ai-feature ai-action">
-        <span>02</span>
         <div><strong>Ask the news</strong><p>Ask a question grounded in the current articles.</p><div className="ai-question"><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="What matters most today?" onKeyDown={(event) => event.key === "Enter" && ask()} /><button type="button" disabled={loading || !question.trim()} onClick={ask}>Ask</button></div></div>
       </div>
 
       <div className="ai-feature ai-action">
-        <span>03</span>
-        <div><strong>Compare coverage</strong><p>Compare observable emphasis across publishers.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Compare coverage", () => aiApi.compare(articles))}>Compare</button></div>
+        <div><strong>Compare coverage</strong><p>Compare observable emphasis only when stories overlap.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Compare coverage", () => aiApi.compare(articles))}>Compare</button></div>
       </div>
     </div>
 
     {(loading || result || error) && <section className={`ai-insight-card ${loading ? "loading" : ""}`} ref={resultRef} aria-live="polite">
       <div className="ai-insight-head">
         <div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel || "News intelligence"}</strong></div>
-        {!loading && !error && <span className="ai-grounded-badge">Source grounded</span>}
+        {!loading && !error && <span className="ai-grounded-badge">Current feed only</span>}
       </div>
       {loading ? <div className="ai-thinking"><span /><span /><span /><p>Analyzing the current stories…</p></div> : error ? <p className="ai-error">{error}</p> : <StructuredInsight response={result} />}
     </section>}
