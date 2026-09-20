@@ -23,7 +23,7 @@ If `AI_ENABLED=false`, Gemini is removed from the request path while Guardian + 
 
 The browser never calls Gemini directly and never receives the Gemini API key. React calls `/api/ai/*` on the Spring Boot backend.
 
-The default model is `gemini-3.8-flash`, which Google currently lists as available on the Gemini API Free Tier. For a strict zero-cost demo, keep the Google AI project on the Free usage tier and do not upgrade/link it to paid API billing. Free-tier requests are still subject to Google's rate limits, so `429 RESOURCE_EXHAUSTED` is handled as a transient failure.
+The default model is `gemini-3.6-flash`, which Google currently lists with free-of-charge input and output on the Gemini API Free Tier. Free-tier requests are still subject to Google's usage limits, so `429 RESOURCE_EXHAUSTED` is handled as a transient failure.
 
 Available operations:
 
@@ -99,7 +99,7 @@ The API exposes both a compatibility `text` representation and the structured co
       "url": "https://example.com/article"
     }
   ],
-  "model": "gemini-3.8-flash",
+  "model": "gemini-3.6-flash",
   "cached": false
 }
 ```
@@ -338,7 +338,7 @@ Windows PowerShell:
 $env:GUARDIAN_API_KEY="your-guardian-key"
 $env:NYT_API_KEY="your-nyt-key"
 $env:GEMINI_API_KEY="your-gemini-key"
-$env:GEMINI_MODEL="gemini-3.8-flash"
+$env:GEMINI_MODEL="gemini-3.6-flash"
 $env:AI_ENABLED="true"
 $env:AI_REQUESTS_PER_MINUTE="15"
 $env:AI_CACHE_TTL="30m"
@@ -357,7 +357,7 @@ macOS/Linux:
 export GUARDIAN_API_KEY="your-guardian-key"
 export NYT_API_KEY="your-nyt-key"
 export GEMINI_API_KEY="your-gemini-key"
-export GEMINI_MODEL="gemini-3.8-flash"
+export GEMINI_MODEL="gemini-3.6-flash"
 export AI_ENABLED="true"
 export AI_REQUESTS_PER_MINUTE="15"
 export AI_CACHE_TTL="30m"
@@ -505,7 +505,7 @@ The React application constructs these payloads from the current feed automatica
 | `GUARDIAN_API_KEY` | empty | Guardian API authentication |
 | `NYT_API_KEY` | empty | NYT API authentication |
 | `GEMINI_API_KEY` | empty | Backend-only Gemini authentication |
-| `GEMINI_MODEL` | `gemini-3.8-flash` | Gemini model |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | Gemini model |
 | `AI_ENABLED` | `true` | AI feature switch |
 | `AI_REQUESTS_PER_MINUTE` | `15` | Application-side AI request guard |
 | `AI_CACHE_TTL` | `30m` | Redis AI response cache TTL |
@@ -584,7 +584,7 @@ GUARDIAN_API_KEY=...
 NYT_API_KEY=...
 GEMINI_API_KEY=...
 AI_ENABLED=true
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-3.6-flash
 AI_CACHE_TTL=30m
 ```
 
