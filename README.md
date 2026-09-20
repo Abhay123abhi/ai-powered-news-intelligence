@@ -25,9 +25,9 @@ The browser never calls Gemini directly and never receives the Gemini API key. R
 
 Available operations:
 
-- **Daily brief** — overview, key developments, and watch-next items from the current feed.
+- **Daily brief** — distinct key developments, optional additional stories, and only genuinely pending watch-next items from the current feed.
 - **Ask the news** — answers grounded only in the supplied articles.
-- **Compare coverage** — common ground, different emphasis, and missing context across retrieved publishers.
+- **Compare coverage** — common ground and observable emphasis only when the current feed contains overlapping coverage across publishers.
 - **Article summary** — concise grounded summary of one article.
 - **Why it matters** — significance explained without unsupported speculation.
 
@@ -102,7 +102,7 @@ The API exposes both a compatibility `text` representation and the structured co
 }
 ```
 
-React renders the structured sections and turns validated citation IDs into clickable source links.
+React renders the structured sections and turns validated citation IDs into clickable source links. The UI describes results as based on the current feed rather than implying independent fact verification.
 
 ## Redis-backed AI response cache
 
