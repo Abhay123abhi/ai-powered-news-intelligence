@@ -311,13 +311,6 @@ body {
   background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
 }
 
-.hero-ai .ai-feature > span {
-  width: 23px;
-  height: 23px;
-  margin-bottom: 10px;
-  border-radius: 7px;
-}
-
 .hero-ai .ai-feature strong {
   font-size: 11px;
 }
@@ -521,13 +514,7 @@ footer {
   }
 
   .hero-ai .ai-feature {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .hero-ai .ai-feature > span {
-    margin-bottom: 0;
+    display: block;
   }
 
   .hero-ai .ai-feature p {
