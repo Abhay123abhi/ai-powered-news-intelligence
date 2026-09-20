@@ -23,7 +23,11 @@ class AiInsightServiceTest {
             public String generate(String systemPrompt, String userPrompt) {
                 calls.incrementAndGet();
                 assertThat(systemPrompt).contains("Use ONLY the supplied article");
-                assertThat(userPrompt).contains("Guardian").contains("Example headline");
+                assertThat(userPrompt)
+                        .contains("Guardian")
+                        .contains("Example headline")
+                        .contains("Never create an 'Overview' section")
+                        .contains("one story or one development only");
                 return """
                         {
                           "sections": [
