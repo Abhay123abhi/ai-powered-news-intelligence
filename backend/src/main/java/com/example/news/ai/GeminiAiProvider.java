@@ -31,7 +31,7 @@ public class GeminiAiProvider implements AiProvider {
     public GeminiAiProvider(
             RestClient.Builder builder,
             @Value("${ai.gemini.api-key:}") String apiKey,
-            @Value("${ai.gemini.model:gemini-3.6-flash}") String model,
+            @Value("${ai.gemini.model:gemini-3.8-flash}") String model,
             @Value("${ai.gemini.connect-timeout:5s}") Duration connectTimeout,
             @Value("${ai.gemini.read-timeout:25s}") Duration readTimeout,
             @Value("${ai.gemini.max-retries:2}") int maxRetries,
