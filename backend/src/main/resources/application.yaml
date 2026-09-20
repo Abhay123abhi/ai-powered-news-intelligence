@@ -33,7 +33,7 @@ ai:
   cache-ttl: ${AI_CACHE_TTL:30m}
   gemini:
     api-key: ${GEMINI_API_KEY:}
-    model: ${GEMINI_MODEL:gemini-3.6-flash}
+    model: ${GEMINI_MODEL:gemini-3.8-flash}
     connect-timeout: ${GEMINI_CONNECT_TIMEOUT:5s}
     read-timeout: ${GEMINI_READ_TIMEOUT:25s}
     max-retries: ${GEMINI_MAX_RETRIES:2}
