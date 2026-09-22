@@ -46,7 +46,7 @@ services:
     name: abhay123abhi-news-web
     runtime: static
     rootDir: frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install --no-audit --no-fund && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: NODE_VERSION
