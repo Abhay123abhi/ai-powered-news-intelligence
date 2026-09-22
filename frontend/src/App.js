@@ -133,8 +133,18 @@ export default function App() {
           <span className="ambient-orb orb-one" />
           <span className="ambient-orb orb-two" />
           <span className="ambient-grid" />
-          <span className="signal-line signal-one" />
-          <span className="signal-line signal-two" />
+          <svg className="hero-signal-wire" viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="heroSignalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#2fd49b" stopOpacity=".18" />
+                <stop offset="46%" stopColor="#2fd49b" />
+                <stop offset="62%" stopColor="#2bc8d9" />
+                <stop offset="100%" stopColor="#2bc8d9" stopOpacity=".12" />
+              </linearGradient>
+            </defs>
+            <path className="signal-wire-base" pathLength="1000" d="M24 146 C 205 210, 355 201, 485 155 S 705 56, 966 116" />
+            <path className="signal-wire-runner" pathLength="1000" d="M24 146 C 205 210, 355 201, 485 155 S 705 56, 966 116" />
+          </svg>
         </div>
 
         <div className="hero-copy-block premium-copy">
