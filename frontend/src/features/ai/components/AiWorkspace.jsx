@@ -126,9 +126,7 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
   }
 
   return <aside className="ai-panel" id="ai-workspace" aria-label="AI workspace" aria-busy={loading}>
-    <svg className="ai-corner-trace" viewBox="0 0 180 120" aria-hidden="true" focusable="false">
-      <path pathLength="100" d="M1 0 V98 Q1 119 22 119 H180" />
-    </svg>
+
     <div className="ai-panel-head"><span className="spark" aria-hidden="true">✦</span><span>AI WORKSPACE</span>
       <small className={`ai-status ${status}`} role="status"><span aria-hidden="true">●</span> {LABELS[status]}</small>
     </div>

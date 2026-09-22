@@ -4051,11 +4051,3 @@ html, body, #root, .app-shell { min-width: 0; width: 100%; }
 .ai-close-result:hover { color: var(--text); background: var(--primary-soft); }
 .ai-close-result span { font-size: 20px; }
 
-/* A quiet green accent confined to the workspace's bottom-left border. */
-.ai-corner-trace { position: absolute; left: 0; bottom: 0; width: 180px; max-width: 35%; height: 120px; pointer-events: none; z-index: 1; }
-.ai-corner-trace path { fill: none; stroke: #2dbb91; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 26 74; opacity: .45; animation: aiCornerTravel 6s linear infinite, aiCornerGlow 4s ease-in-out infinite; }
-:root:not([data-theme="dark"]) .ai-corner-trace path { stroke: #168466; }
-@keyframes aiCornerTravel { to { stroke-dashoffset: -100; } }
-@keyframes aiCornerGlow { 0%, 100% { opacity: .25; } 50% { opacity: .6; } }
-@media (prefers-reduced-motion: reduce) { .ai-corner-trace path { stroke-dasharray: none; opacity: .3; } }
-@media (forced-colors: active) { .ai-corner-trace { display: none; } }
