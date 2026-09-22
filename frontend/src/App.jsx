@@ -3,6 +3,7 @@ import newsApi from "./features/news/api/newsApi";
 import SearchForm from "./features/news/components/SearchForm";
 import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
+import NewsFlow from "./components/NewsFlow";
 import "./styles/app.css";
 
 const DEFAULT_QUERY = "latest";
@@ -175,11 +176,7 @@ export default function App() {
             {QUICK_TOPICS.map((topic) => <button className={search.keyword.toLowerCase() === topic ? "selected" : ""} type="button" key={topic} onClick={() => handleTopicChange(topic)} disabled={loading}>{labelForTopic(topic)}</button>)}
           </div>
 
-          <div className="source-strip" aria-label="Connected news sources">
-            <span className="source-strip-label">Sources</span>
-            <span className="source-chip guardian-source"><i className="guardian-dot" /> The Guardian</span>
-            <span className="source-chip nyt-source"><i className="nyt-dot" /> The New York Times</span>
-          </div>
+          <NewsFlow />
         </div>
 
         <div className="hero-ai premium-ai-stage">
