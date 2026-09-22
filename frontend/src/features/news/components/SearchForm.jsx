@@ -31,6 +31,6 @@ export default function SearchForm({ initialKeyword, initialPageSize, onSearch, 
         <option value={20}>20 stories</option>
       </select>
     </label>
-    <button type="submit" disabled={loading || !keyword.trim()}>{loading ? <><i className="button-loader" aria-hidden="true" />Searching</> : <>Search news <span className="search-submit-icon" aria-hidden="true">→</span></>}</button>
+    <button type="submit" disabled={loading || !keyword.trim()}>{loading ? <><i className="button-loader" aria-hidden="true" />Searching</> : <>Search <span className="search-submit-icon" aria-hidden="true">→</span></>}</button>
   </form>;
 }

@@ -154,8 +154,12 @@ export default function App() {
           <span className="ambient-orb orb-one" />
           <span className="ambient-orb orb-two" />
           <span className="ambient-grid" />
-          <span className="signal-line signal-one" />
-          <span className="signal-line signal-two" />
+          <svg className="newswire-background" viewBox="0 0 1400 800" preserveAspectRatio="none" focusable="false">
+            <path className="newswire-track" d="M34 0 V530 Q34 580 84 580 H570 Q620 580 620 630 V800" />
+            <path className="newswire-pulse" pathLength="100" d="M34 0 V530 Q34 580 84 580 H570 Q620 580 620 630 V800" />
+            <path className="newswire-track" d="M1400 100 H1300 Q1260 100 1260 60 V0" />
+            <path className="newswire-pulse secondary" pathLength="100" d="M1400 100 H1300 Q1260 100 1260 60 V0" />
+          </svg>
         </div>
 
         <div className="hero-copy-block premium-copy">
