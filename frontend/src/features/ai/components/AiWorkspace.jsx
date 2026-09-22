@@ -46,6 +46,8 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
   const request = useRef(null);
   const sequence = useRef(0);
   const resultRef = useRef(null);
+  const questionRef = useRef(null);
+  useEffect(() => { if (asking) questionRef.current?.focus({ preventScroll: true }); }, [asking]);
   const feedKey = useMemo(() => `${feedId || ''}:${page}:${articles.map(a => a.url).join('|')}`, [feedId, page, articles]);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     sequence.current += 1;
     request.current?.abort();
     inFlight.current = false;
-    setResult(null); setError(''); setActiveLabel(''); setExpired(false);
+    setResult(null); setError(''); setActiveLabel(''); setAsking(false); setExpired(false);
     setStatus(value => value === 'generating' ? 'ready' : value);
     return () => { sequence.current += 1; request.current?.abort(); inFlight.current = false; };
     // Article objects can change without changing the actual feed; identity is explicit above.
@@ -76,10 +78,10 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
   }, [feedLoading]);
 
   useEffect(() => {
-    if (!result && !error) return;
+    if (!result) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     resultRef.current?.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
-  }, [result, error]);
+  }, [result]);
 
   const loading = status === 'generating';
   const canRun = configured && feedId && selected.length > 0 && !feedLoading && !expired;
@@ -98,6 +100,7 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     inFlight.current = true;
     const version = ++sequence.current;
     const controller = new AbortController(); request.current = controller;
+    setAsking(label === 'Ask the news');
     setActiveLabel(label); setAskedQuestion(label === 'Ask the news' ? question.trim() : ''); setStatus('generating'); setError(''); setResult(null);
     try {
       const data = await action(controller.signal);
@@ -131,24 +134,24 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     {status === 'checking' && <p className="ai-availability-note">Connecting to the shared AI workspace. The first visit can take a little longer.</p>}
     {!configured && status !== 'checking' && <div className="ai-availability-note"><p>AI insights are taking a break. You can still search and read the original reporting.</p><button type="button" onClick={checkAgain}>Check availability</button></div>}
     <div className="ai-controls">
-      <div className="ai-feature ai-action"><div><strong>Daily brief</strong><p>Catch up on the key headlines.</p>
+      <div className={`ai-feature ai-action ${activeLabel === 'Daily brief' ? 'is-active' : ''}`}><div><strong>Daily brief</strong><p>Catch up on the key headlines.</p>
         <button type="button" disabled={loading || !canRun} onClick={() => run('Daily brief', signal => aiApi.brief(selection, signal))}>Create brief</button>
       </div></div>
-      <div className="ai-feature ai-action"><div><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Search both publishers to compare.' : 'See how publishers cover the news.'}</p>
+      <div className={`ai-feature ai-action ${activeLabel === 'Compare coverage' ? 'is-active' : ''}`}><div><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Search both publishers to compare.' : 'See how publishers cover the news.'}</p>
         <button type="button" disabled={loading || !canRun || sources.size < 2} onClick={() => run('Compare coverage', signal => aiApi.compare(selection, signal))}>Compare</button>
       </div></div>
-      <div className="ai-feature ai-action"><div><strong>Ask the news</strong><p>Go deeper with your own question.</p>
-        <button type="button" aria-expanded={asking} aria-controls="ai-question-form" disabled={loading || !canRun} onClick={() => setAsking(value => !value)}>Ask a question</button>
+      <div className={`ai-feature ai-action ${activeLabel === 'Ask the news' ? 'is-active' : ''}`}><div><strong>Ask the news</strong><p>Go deeper with your own question.</p>
+        <button type="button" aria-expanded={asking} aria-controls="ai-question-form" disabled={loading || !canRun} onClick={() => { setAsking(value => !value); setResult(null); setError(''); setActiveLabel(asking ? '' : 'Ask the news'); }}>Ask a question</button>
       </div></div>
     </div>
     {asking && <form id="ai-question-form" className="ai-ask-row ai-action" onSubmit={ask}>
       <label htmlFor="news-question">Ask the news</label>
-      <div className="ai-question"><input autoFocus id="news-question" disabled={loading || feedLoading} value={question} maxLength={500} aria-describedby="question-help" onChange={event => setQuestion(event.target.value)} placeholder="What changed, and why does it matter?" />
+      <div className="ai-question"><input ref={questionRef} id="news-question" disabled={loading || feedLoading} value={question} maxLength={500} aria-describedby="question-help" onChange={event => setQuestion(event.target.value)} placeholder="What changed, and why does it matter?" />
         <button type="submit" disabled={loading || !canRun || !question.trim()}>Ask</button></div>
       <p id="question-help">Answers use excerpts from this news feed.</p>
     </form>}
     <p className="ai-evidence-note">Based on up to 8 headlines and excerpts. Check sources; AI can make mistakes.</p>
-    <button className="ai-example-button" type="button" disabled={loading} onClick={() => { setResult(EXAMPLE); setError(''); setActiveLabel('Illustrative example'); }}>View an example · no AI request</button>
+    <button className="ai-example-button" type="button" disabled={loading} onClick={() => { setAsking(false); setResult(EXAMPLE); setError(''); setActiveLabel('Illustrative example'); }}>View an example · no AI request</button>
     {(loading || result || error) && <section className={`ai-insight-card ${loading ? 'loading' : ''}`} ref={resultRef} aria-live="polite">
       <div className="ai-insight-head"><div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel}</strong></div>
         {result && <span className="ai-grounded-badge">{result.example ? 'Example, not live news' : result.cached ? 'Cached insight' : `${selected.length} source stories`}</span>}

@@ -60,3 +60,16 @@ it('automatically includes both publishers without a story selection step', asyn
   await userEvent.click(screen.getByRole('button', { name: 'Create brief' }));
   expect(aiApi.brief.mock.calls[0][0].articleIds).toEqual([0, 1, 2, 3, 4, 5, 6, 11]);
 });
+
+it('switches tools without leaving a question form and unrelated result together', async () => {
+  aiApi.brief.mockResolvedValue(answer);
+  render(<AiWorkspace {...props} />); await screen.findByText('Ready');
+  await userEvent.click(screen.getByRole('button', { name: 'Ask a question' }));
+  expect(screen.getByLabelText('Ask the news')).toHaveFocus();
+  await userEvent.click(screen.getByRole('button', { name: 'Create brief' }));
+  await screen.findByText('A supported result');
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Ask a question' }));
+  expect(screen.queryByText('A supported result')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Ask the news')).toHaveFocus();
+});
