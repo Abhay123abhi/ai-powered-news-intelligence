@@ -3907,6 +3907,9 @@ html, body, #root, .app-shell { min-width: 0; width: 100%; }
 }
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
   :root .premium-ai-stage .ai-panel { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .hero-ambient .ambient-orb, .hero-ambient .ambient-grid { display: none; }
+}
+@media (forced-colors: active) {
   .hero-ambient { display: none; }
 }
 
