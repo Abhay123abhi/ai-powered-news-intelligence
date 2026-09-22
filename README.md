@@ -1,6 +1,6 @@
 # AI-Powered News Intelligence Platform
 
-A news search and reading app built with Java 21, Spring Boot, React, and Redis. It combines articles from The Guardian and The New York Times, with optional summaries, briefings, Q&A, and coverage comparison using Google Gemini.
+A news search and reading app built with Java 21, Spring Boot, React, and Redis. It combines articles from The Guardian and The New York Times, with optional briefings, Q&A, and coverage comparison using Google Gemini.
 
 ## Features
 
@@ -9,7 +9,7 @@ A news search and reading app built with Java 21, Spring Boot, React, and Redis.
 - Normalize, deduplicate, sort, and paginate results.
 - Cache news searches and AI responses in Redis.
 - Return available results when one news provider fails.
-- Generate briefings, summaries, and answers from the retrieved articles, with source links.
+- Generate briefings and answers from the retrieved articles, with source links.
 - Handle transient Gemini failures with timeouts, retries, and a circuit breaker.
 - Enable or disable AI independently of news search.
 
@@ -30,8 +30,6 @@ Available operations:
 - **Daily brief** — distinct key developments, optional additional stories, and only genuinely pending watch-next items from the current feed.
 - **Ask the news** — answers grounded only in the supplied articles.
 - **Compare coverage** — common ground and observable emphasis only when the current feed contains overlapping coverage across publishers.
-- **Article summary** — concise grounded summary of one article.
-- **Why it matters** — significance explained without unsupported speculation.
 
 ### Grounded prompt flow
 
