@@ -108,7 +108,7 @@
   opacity: .66;
 }
 
-/* Subtle electric trace that continuously travels around the AI workspace edge. */
+/* Moving highlight confined to the AI workspace top edge. */
 .premium-ai-stage .ai-panel {
   position: relative;
   overflow: hidden;
@@ -116,32 +116,25 @@
 
 .premium-ai-stage .ai-panel::before {
   position: absolute;
-  inset: -1px;
+  inset: 0 0 auto;
   z-index: 5;
-  padding: 1px;
-  border-radius: inherit;
+  width: auto;
+  height: 2px;
+  padding: 0;
+  border-radius: 0;
   pointer-events: none;
   content: "";
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 77%,
-    rgba(43, 200, 217, .05) 80%,
-    rgba(47, 212, 155, .48) 84%,
-    rgba(43, 200, 217, .72) 87%,
-    rgba(118, 87, 255, .22) 90%,
-    transparent 94% 100%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: .52;
-  animation: workspaceCurrent 7.5s linear infinite;
+  background: linear-gradient(90deg, transparent 10%, var(--ai-violet) 35%, var(--ai-cyan) 50%, var(--ai-mint) 60%, transparent 85%);
+  background-size: 200% 100%;
+  -webkit-mask: none;
+  mask: none;
+  transform: none;
+  opacity: .85;
+  animation: workspaceTopEdge 5s ease-in-out infinite alternate;
 }
 
 :root[data-theme="dark"] .premium-ai-stage .ai-panel::before {
-  opacity: .62;
+  opacity: .85;
 }
 
 /* Make the existing background signal wires easier to notice, but still ambient. */
@@ -173,8 +166,9 @@
   filter: drop-shadow(0 0 8px rgba(47, 212, 155, .30));
 }
 
-@keyframes workspaceCurrent {
-  to { transform: rotate(360deg); }
+@keyframes workspaceTopEdge {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }
 }
 
 @media (max-width: 720px) {
