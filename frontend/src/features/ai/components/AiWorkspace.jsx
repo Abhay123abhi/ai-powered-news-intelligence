@@ -47,6 +47,7 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
   const sequence = useRef(0);
   const resultRef = useRef(null);
   const questionRef = useRef(null);
+  const exampleRef = useRef(null);
   useEffect(() => { if (asking) questionRef.current?.focus({ preventScroll: true }); }, [asking]);
   const feedKey = useMemo(() => `${feedId || ''}:${page}:${articles.map(a => a.url).join('|')}`, [feedId, page, articles]);
 
@@ -151,10 +152,14 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
       <p id="question-help">Answers use excerpts from this news feed.</p>
     </form>}
     <p className="ai-evidence-note">Based on up to 8 headlines and excerpts. Check sources; AI can make mistakes.</p>
-    <button className="ai-example-button" type="button" disabled={loading} onClick={() => { setAsking(false); setResult(EXAMPLE); setError(''); setActiveLabel('Illustrative example'); }}>View an example · no AI request</button>
+    <button ref={exampleRef} className="ai-example-button" type="button" disabled={loading} onClick={() => { setAsking(false); setResult(EXAMPLE); setError(''); setActiveLabel('Illustrative example'); }}>View an example · no AI request</button>
     {(loading || result || error) && <section className={`ai-insight-card ${loading ? 'loading' : ''}`} ref={resultRef} aria-live="polite">
       <div className="ai-insight-head"><div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel}</strong></div>
         {result && <span className="ai-grounded-badge">{result.example ? 'Example, not live news' : result.cached ? 'Cached insight' : `${selected.length} source stories`}</span>}
+        {!loading && <button className="ai-close-result" type="button" aria-label="Close AI result" onClick={() => {
+          setResult(null); setError(''); setActiveLabel(''); setAskedQuestion('');
+          exampleRef.current?.focus({ preventScroll: true });
+        }}>Close <span aria-hidden="true">×</span></button>}
       </div>
       {activeLabel === 'Ask the news' && askedQuestion && <p className="ai-asked-question">Your question: {askedQuestion}</p>}
       {loading ? <div className="ai-thinking"><span /><span /><span /><p>Reading the news…</p></div> : error ? <div className="ai-error"><p>{error}</p>

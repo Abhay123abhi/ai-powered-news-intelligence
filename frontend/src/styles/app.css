@@ -4049,3 +4049,12 @@ html, body, #root, .app-shell { min-width: 0; width: 100%; }
   .newswire-pulse { stroke-dasharray: none; opacity: .25; }
   .news-flow-arrow::after { display: none; }
 }
+
+/* Align the reading grid with the same content rails as the hero. */
+@media (min-width: 1081px) {
+  .content { max-width: none; width: 100%; box-sizing: border-box; margin-inline: 0; padding-inline: max(28px, calc((100% - 1264px) / 2)); }
+}
+.ai-insight-head { flex-wrap: wrap; gap: 10px; }
+.ai-close-result { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--text); background: var(--surface); font: inherit; font-size: 12px; cursor: pointer; }
+.ai-close-result:hover { border-color: var(--primary); }
+.ai-close-result span { font-size: 20px; }

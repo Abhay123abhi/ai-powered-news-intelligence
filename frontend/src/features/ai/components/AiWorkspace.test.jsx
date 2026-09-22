@@ -73,3 +73,13 @@ it('switches tools without leaving a question form and unrelated result together
   expect(screen.queryByText('A supported result')).not.toBeInTheDocument();
   expect(screen.getByLabelText('Ask the news')).toHaveFocus();
 });
+
+it('closes an example and restores keyboard focus to its trigger', async () => {
+  render(<AiWorkspace {...props} />); await screen.findByText('Ready');
+  const example = screen.getByRole('button', { name: /View an example/ });
+  await userEvent.click(example);
+  expect(screen.getByText('Example, not live news')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Close AI result' }));
+  expect(screen.queryByText('Example, not live news')).not.toBeInTheDocument();
+  expect(example).toHaveFocus();
+});
