@@ -160,7 +160,7 @@ export default function App() {
         <div className="hero-copy-block premium-copy">
           <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE</div>
           <h1>Search the news.<br /><em>Think beyond it.</em></h1>
-          <p>Trusted reporting becomes an AI research workspace. Search The Guardian and The New York Times, then generate a briefing, ask grounded questions, and compare how publishers frame the same story.</p>
+          <p>Search The Guardian and The New York Times. Get a quick AI brief, ask a question, or compare their coverage.</p>
 
           <div className="hero-value-row" aria-label="AI workspace capabilities">
             <span><i /> Source grounded</span>
