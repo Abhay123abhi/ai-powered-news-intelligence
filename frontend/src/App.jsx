@@ -155,10 +155,10 @@ export default function App() {
           <span className="ambient-orb orb-two" />
           <span className="ambient-grid" />
           <svg className="newswire-background" viewBox="0 0 1400 800" preserveAspectRatio="none" focusable="false">
-            <path className="newswire-track" d="M34 0 V530 Q34 580 84 580 H570 Q620 580 620 630 V800" />
-            <path className="newswire-pulse" pathLength="100" d="M34 0 V530 Q34 580 84 580 H570 Q620 580 620 630 V800" />
-            <path className="newswire-track" d="M1400 100 H1300 Q1260 100 1260 60 V0" />
-            <path className="newswire-pulse secondary" pathLength="100" d="M1400 100 H1300 Q1260 100 1260 60 V0" />
+            <path className="newswire-track" d="M60 -80 C-25 100 120 180 54 340 S-10 580 90 675 S420 780 700 745 S1130 655 1460 820" />
+            <path className="newswire-pulse" pathLength="100" d="M60 -80 C-25 100 120 180 54 340 S-10 580 90 675 S420 780 700 745 S1130 655 1460 820" />
+            <path className="newswire-track" d="M1470 20 C1180 -30 1110 100 920 65 S590 -20 400 60" />
+            <path className="newswire-pulse secondary" pathLength="100" d="M1470 20 C1180 -30 1110 100 920 65 S590 -20 400 60" />
           </svg>
         </div>
 

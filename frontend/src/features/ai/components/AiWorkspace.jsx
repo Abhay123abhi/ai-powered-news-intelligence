@@ -159,7 +159,7 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
         {!loading && <button className="ai-close-result" type="button" aria-label="Close AI result" onClick={() => {
           setResult(null); setError(''); setActiveLabel(''); setAskedQuestion('');
           exampleRef.current?.focus({ preventScroll: true });
-        }}>Close <span aria-hidden="true">×</span></button>}
+        }}><span aria-hidden="true">×</span></button>}
       </div>
       {activeLabel === 'Ask the news' && askedQuestion && <p className="ai-asked-question">Your question: {askedQuestion}</p>}
       {loading ? <div className="ai-thinking"><span /><span /><span /><p>Reading the news…</p></div> : error ? <div className="ai-error"><p>{error}</p>
