@@ -4,7 +4,7 @@ services:
     region: singapore
     plan: free
     ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
+    maxmemoryPolicy: noeviction
 
   - type: web
     name: abhay123abhi-news-api
@@ -23,7 +23,9 @@ services:
       - key: AI_ENABLED
         value: "true"
       - key: AI_REQUESTS_PER_MINUTE
-        value: "15"
+        value: "5"
+      - key: AI_REQUESTS_PER_DAY
+        value: "20"
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
@@ -33,7 +35,7 @@ services:
       - key: NEWS_READ_TIMEOUT_MS
         value: "20000"
       - key: NEWS_PROVIDER_TIMEOUT
-        value: 35s
+        value: 25s
       - key: REDIS_URL
         fromService:
           type: keyvalue
@@ -46,8 +48,8 @@ services:
     name: abhay123abhi-news-web
     runtime: static
     rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: ./build
+    buildCommand: npm ci && npm test && npm run build
+    staticPublishPath: ./dist
     envVars:
       - key: NODE_VERSION
         value: "22"

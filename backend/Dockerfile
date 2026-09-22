@@ -4,7 +4,7 @@ FROM gradle:8.14.4-jdk21-alpine AS builder
 WORKDIR /app
 COPY . .
 
-RUN gradle --no-daemon bootJar
+RUN gradle --no-daemon test bootJar
 
 # -------- Runtime Stage --------
 FROM eclipse-temurin:21-jre-alpine

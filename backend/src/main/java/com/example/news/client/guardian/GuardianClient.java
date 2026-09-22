@@ -77,7 +77,7 @@ public class GuardianClient implements NewsProviderClient {
             return new NewsApiResult(totalResults, totalPages, articles);
 
         } catch (Exception ex) {
-            log.error("Guardian API error", ex);
+            log.warn("Guardian request failed ({})", ex.getClass().getSimpleName());
             if (ex instanceof NewsProviderException providerException) {
                 throw providerException;
             }
