@@ -44,7 +44,7 @@ The violet/cyan design includes light/dark themes, separate mobile Discover/AI v
 - Feed locks, request throttles, and the two-generation concurrency limit target **one backend instance**. Redis stores feeds and shared AI counters. Multiple instances would need distributed feed locks and a distributed concurrency limit.
 - Redis failure permits bounded local news browsing and pauses new AI generation. Already cached AI responses can be reused only while their cache is available.
 - Free Redis data loss or a manual flush can reset counters. Quota controls reduce abuse; they are not a durable financial spending cap.
-- Questions and selected excerpts are sent to Gemini. Do not submit sensitive information. Review [Google's free-tier data-use terms](https://ai.google.dev/gemini-api/terms).
+- The UI automatically chooses up to eight stories from the current page, including both publishers when available. Questions and those excerpts are sent to Gemini. Do not submit sensitive information. Review [Google's free-tier data-use terms](https://ai.google.dev/gemini-api/terms).
 
 ## Run locally
 

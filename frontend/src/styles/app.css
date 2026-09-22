@@ -3767,12 +3767,12 @@ html, body, #root, .app-shell { min-width: 0; width: 100%; }
 .hero, .premium-copy, .premium-ai-stage, .ai-panel, .story-card { min-width: 0; }
 .premium-hero { overflow: clip; }
 .ai-stage-halo { inset: 5% 0 -6%; pointer-events: none; }
-.premium-ai-stage .ai-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.premium-ai-stage .ai-feature { animation: none; transform: none; min-width: 0; padding: 16px; }
+.premium-ai-stage .ai-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.premium-ai-stage .ai-feature { animation: none; transform: none; min-width: 0; padding: 12px; }
 .premium-ai-stage .ai-feature:hover { transform: none; }
 .premium-ai-stage .ai-feature strong, .ai-ask-row > label { font-size: 14px; font-weight: 750; }
 .premium-ai-stage .ai-feature p { font-size: 12px; line-height: 1.6; }
-.premium-ai-stage .ai-ask-row { grid-column: 1 / -1; margin: 0; display: block; }
+.premium-ai-stage .ai-ask-row { margin: 14px 0 0; display: block; }
 .premium-ai-stage .ai-question { display: flex; width: 100%; gap: 8px; margin-top: 10px; }
 .premium-ai-stage .ai-question input { flex: 1; min-width: 0; width: 100%; min-height: 44px; font-size: 16px; padding: 10px 12px; }
 .premium-ai-stage .ai-action button, .ai-availability-note button, .ai-error button { min-height: 44px; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
@@ -3810,3 +3810,16 @@ html, body, #root, .app-shell { min-width: 0; width: 100%; }
 /* Keep the input surface still while retaining decorative motion outside it. */
 .premium-ai-stage .ai-panel, .premium-ai-stage .ai-panel:hover { transform: none; }
 .ai-asked-question { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* Compact launch cards; questions expand below without squeezing the input. */
+.premium-ai-stage .ai-feature > div { display: flex; flex-direction: column; height: 100%; }
+.premium-ai-stage .ai-feature p { flex: 1; margin: 6px 0 10px; min-height: 0; }
+.premium-ai-stage .ai-feature button { width: 100%; padding: 9px 7px; }
+.premium-ai-stage .ai-intro, #question-help { font-size: 12px; line-height: 1.5; }
+#question-help { color: var(--muted); margin: 6px 0 0; }
+.premium-hero .ambient-orb { opacity: .85; filter: blur(12px); }
+.premium-hero .orb-one { top: -80px; width: 520px; height: 520px; }
+.premium-hero .orb-two { bottom: -100px; width: 460px; height: 460px; }
+@media (min-width: 1100px) {
+  .premium-hero { padding-top: 32px; padding-bottom: 32px; }
+}

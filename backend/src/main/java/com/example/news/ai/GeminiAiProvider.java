@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class GeminiAiProvider implements AiProvider {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeminiAiProvider.class);
     private final RestClient restClient;
     private final AiBudget budget;
     private final String apiKey;
@@ -81,6 +82,8 @@ public class GeminiAiProvider implements AiProvider {
                 circuitOpenUntil.set(0);
                 return result;
             } catch (RestClientResponseException e) {
+                // Never log provider bodies, prompts, request URLs, or credentials.
+                log.warn("Gemini request failed: upstreamStatus={}, category={}", e.getStatusCode().value(), failureCategory(e.getStatusCode().value()));
                 if (e.getStatusCode().value() == 429) {
                     int wait = retryAfter(e);
                     circuitOpenUntil.set(System.currentTimeMillis() + wait * 1000L);
@@ -88,8 +91,7 @@ public class GeminiAiProvider implements AiProvider {
                 }
                 if (!isTransient(e) || attempt == attempts) {
                     if (isTransient(e)) recordTransientFailure();
-                    throw new com.example.news.exception.ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY,
-                            "AI_UPSTREAM_ERROR", "AI could not complete this insight. Please try again later.", 30);
+                    throw upstreamFailure(e.getStatusCode().value());
                 }
                 lastFailure = e;
             } catch (ResourceAccessException e) {
@@ -152,6 +154,27 @@ public class GeminiAiProvider implements AiProvider {
             throw new IllegalStateException("AI provider returned an empty response");
         }
         return text;
+    }
+
+    private String failureCategory(int status) {
+        return switch (status) {
+            case 400 -> "AI_REQUEST_REJECTED";
+            case 401, 403 -> "AI_ACCESS_DENIED";
+            case 404 -> "AI_MODEL_UNAVAILABLE";
+            case 429 -> "AI_QUOTA_REACHED";
+            default -> "AI_UPSTREAM_ERROR";
+        };
+    }
+
+    private com.example.news.exception.ApiException upstreamFailure(int status) {
+        String message = switch (status) {
+            case 400 -> "AI could not accept this request. Please try another insight; news browsing still works.";
+            case 401, 403 -> "AI access is currently unavailable. You can still browse the news.";
+            case 404 -> "The AI model is currently unavailable. You can still browse the news.";
+            default -> "The AI service is temporarily unavailable. Please try again shortly.";
+        };
+        return new com.example.news.exception.ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY,
+                failureCategory(status), message, status >= 500 ? 30 : 0);
     }
 
     private int retryAfter(RestClientResponseException exception) {

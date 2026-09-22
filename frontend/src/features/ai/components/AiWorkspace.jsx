@@ -30,7 +30,16 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
   const [error, setError] = useState('');
   const [askedQuestion, setAskedQuestion] = useState('');
   const [activeLabel, setActiveLabel] = useState('');
-  const [selected, setSelected] = useState([]);
+  const [asking, setAsking] = useState(false);
+  const selected = useMemo(() => {
+    const indexes = [];
+    const publishers = new Set();
+    articles.forEach((article, index) => {
+      if (!publishers.has(article.source) && indexes.length < 8) { indexes.push(index); publishers.add(article.source); }
+    });
+    articles.forEach((_, index) => { if (indexes.length < 8 && !indexes.includes(index)) indexes.push(index); });
+    return indexes.sort((a, b) => a - b);
+  }, [articles]);
   const [retryAt, setRetryAt] = useState(null);
   const [expired, setExpired] = useState(false);
   const inFlight = useRef(false);
@@ -53,7 +62,6 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     request.current?.abort();
     inFlight.current = false;
     setResult(null); setError(''); setActiveLabel(''); setExpired(false);
-    setSelected(articles.slice(0, 8).map((_, i) => i));
     setStatus(value => value === 'generating' ? 'ready' : value);
     return () => { sequence.current += 1; request.current?.abort(); inFlight.current = false; };
     // Article objects can change without changing the actual feed; identity is explicit above.
@@ -107,11 +115,6 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     } finally { if (version === sequence.current) inFlight.current = false; }
   }
 
-  function toggleStory(index) {
-    if (inFlight.current) return;
-    setSelected(current => current.includes(index) ? current.filter(i => i !== index) : [...current, index].sort((a, b) => a - b));
-    setResult(null); setError('');
-  }
   function ask(event) {
     event.preventDefault();
     if (!question.trim()) return;
@@ -123,39 +126,35 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
       <small className={`ai-status ${status}`} role="status"><span aria-hidden="true">●</span> {LABELS[status]}</small>
     </div>
     <div className="ai-overview"><h3>Ask more of your news.</h3>
-      <p className="ai-intro">Explore selected headlines and excerpts, with links to the reporting behind them.</p>
+      <p className="ai-intro">Get a quick brief, compare publishers, or ask a question.</p>
     </div>
     {status === 'checking' && <p className="ai-availability-note">Connecting to the shared AI workspace. The first visit can take a little longer.</p>}
     {!configured && status !== 'checking' && <div className="ai-availability-note"><p>AI insights are taking a break. You can still search and read the original reporting.</p><button type="button" onClick={checkAgain}>Check availability</button></div>}
-    <details className="ai-story-selection">
-      <summary>Based on {selected.length} of {articles.length} stories · Choose stories</summary>
-      <p id="story-selection-help">Choose up to 8 stories. For comparisons, select the same topic from both publishers.</p>
-      <div className="ai-selection-list">{articles.map((article, index) => <label key={`${article.url}-${index}`}>
-        <input type="checkbox" checked={selected.includes(index)} disabled={loading || feedLoading || (!selected.includes(index) && selected.length >= 8)} onChange={() => toggleStory(index)} />
-        <span>{article.title}<small>{article.source}</small></span>
-      </label>)}</div>
-    </details>
     <div className="ai-controls">
-      <div className="ai-feature ai-action"><div><strong>Daily brief</strong><p>The key developments in your selection.</p>
+      <div className="ai-feature ai-action"><div><strong>Daily brief</strong><p>Catch up on the key headlines.</p>
         <button type="button" disabled={loading || !canRun} onClick={() => run('Daily brief', signal => aiApi.brief(selection, signal))}>Create brief</button>
       </div></div>
-      <div className="ai-feature ai-action"><div><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Choose stories from both publishers.' : 'Compare reporting on the same topic.'}</p>
+      <div className="ai-feature ai-action"><div><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Search both publishers to compare.' : 'See how publishers cover the news.'}</p>
         <button type="button" disabled={loading || !canRun || sources.size < 2} onClick={() => run('Compare coverage', signal => aiApi.compare(selection, signal))}>Compare</button>
       </div></div>
-      <form className="ai-feature ai-action ai-ask-row" onSubmit={ask}>
-        <label htmlFor="news-question">Ask the news</label><p id="question-help">Answers use only your selected excerpts.</p>
-        <div className="ai-question"><input id="news-question" disabled={loading || feedLoading} value={question} maxLength={500} aria-describedby="question-help" onChange={event => setQuestion(event.target.value)} placeholder="What changed, and why does it matter?" />
-          <button type="submit" disabled={loading || !canRun || !question.trim()}>Ask</button></div>
-      </form>
+      <div className="ai-feature ai-action"><div><strong>Ask the news</strong><p>Go deeper with your own question.</p>
+        <button type="button" aria-expanded={asking} aria-controls="ai-question-form" disabled={loading || !canRun} onClick={() => setAsking(value => !value)}>Ask a question</button>
+      </div></div>
     </div>
-    <p className="ai-evidence-note">AI can make mistakes. Check the linked sources. Please don’t enter personal or sensitive information.</p>
+    {asking && <form id="ai-question-form" className="ai-ask-row ai-action" onSubmit={ask}>
+      <label htmlFor="news-question">Ask the news</label>
+      <div className="ai-question"><input autoFocus id="news-question" disabled={loading || feedLoading} value={question} maxLength={500} aria-describedby="question-help" onChange={event => setQuestion(event.target.value)} placeholder="What changed, and why does it matter?" />
+        <button type="submit" disabled={loading || !canRun || !question.trim()}>Ask</button></div>
+      <p id="question-help">Answers use excerpts from this news feed.</p>
+    </form>}
+    <p className="ai-evidence-note">Based on up to 8 headlines and excerpts. Check sources; AI can make mistakes.</p>
     <button className="ai-example-button" type="button" disabled={loading} onClick={() => { setResult(EXAMPLE); setError(''); setActiveLabel('Illustrative example'); }}>View an example · no AI request</button>
     {(loading || result || error) && <section className={`ai-insight-card ${loading ? 'loading' : ''}`} ref={resultRef} aria-live="polite">
       <div className="ai-insight-head"><div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel}</strong></div>
-        {result && <span className="ai-grounded-badge">{result.example ? 'Example, not live news' : result.cached ? 'Cached insight' : `${selected.length} selected stories`}</span>}
+        {result && <span className="ai-grounded-badge">{result.example ? 'Example, not live news' : result.cached ? 'Cached insight' : `${selected.length} source stories`}</span>}
       </div>
       {activeLabel === 'Ask the news' && askedQuestion && <p className="ai-asked-question">Your question: {askedQuestion}</p>}
-      {loading ? <div className="ai-thinking"><span /><span /><span /><p>Reading your selected excerpts…</p></div> : error ? <div className="ai-error"><p>{error}</p>
+      {loading ? <div className="ai-thinking"><span /><span /><span /><p>Reading the news…</p></div> : error ? <div className="ai-error"><p>{error}</p>
         {retryAt && <p>Try new insights after {retryAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. An identical cached request may still be available.</p>}
         {expired && <button type="button" onClick={onRefresh}>Refresh news</button>}
       </div> : <StructuredInsight response={result} />}

@@ -37,6 +37,22 @@ class GeminiAiProviderTest {
         assertThat(provider.generate("system", "question")).isEqualTo("ok");
         verify(budget, times(2)).acquire(); server.verify();
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"400,AI_REQUEST_REJECTED", "403,AI_ACCESS_DENIED", "404,AI_MODEL_UNAVAILABLE"})
+    void distinguishesPermanentProviderFailuresWithoutRetry(int status, String code) {
+        RestClient.Builder builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
+        AiBudget budget = mock(AiBudget.class);
+        var provider = provider(builder, budget);
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"))
+                .andRespond(withStatus(HttpStatus.valueOf(status)).body("secret provider detail"));
+        assertThatThrownBy(() -> provider.generate("system", "question")).isInstanceOfSatisfying(ApiException.class, ex -> {
+            assertThat(ex.code).isEqualTo(code);
+            assertThat(ex.retryAfter).isZero();
+            assertThat(ex.getMessage()).doesNotContain("secret");
+        });
+        verify(budget, times(1)).acquire(); server.verify();
+    }
     private GeminiAiProvider provider(RestClient.Builder builder, AiBudget budget) {
         return new GeminiAiProvider(builder.baseUrl("https://generativelanguage.googleapis.com").build(), budget, "test-key", "test-model", 1, Duration.ofMillis(1), 4, Duration.ofSeconds(30));
     }

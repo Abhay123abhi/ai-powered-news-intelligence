@@ -17,6 +17,7 @@ it('shows checking instead of offline during startup', () => {
 it('uses backend references and guards repeated keyboard submission', async () => {
   aiApi.ask.mockReturnValue(new Promise(() => {})); render(<AiWorkspace {...props} />);
   await screen.findByText('Ready');
+  await userEvent.click(screen.getByRole('button', { name: 'Ask a question' }));
   await userEvent.type(screen.getByLabelText('Ask the news'), 'What changed?');
   const form = screen.getByLabelText('Ask the news').closest('form');
   fireEvent.submit(form); fireEvent.submit(form);
@@ -49,4 +50,13 @@ it('explains quota errors while keeping examples available', async () => {
 it('disables comparison when only one publisher is selected', async () => {
   render(<AiWorkspace {...props} articles={[stories[0]]} />); await screen.findByText('Ready');
   expect(screen.getByRole('button', { name: 'Compare', exact: true })).toBeDisabled();
+});
+
+it('automatically includes both publishers without a story selection step', async () => {
+  aiApi.brief.mockResolvedValue(answer);
+  const articles = Array.from({ length: 12 }, (_, i) => ({ title: `Story ${i}`, url: `https://example.com/${i}`, source: i === 11 ? 'NYT' : 'Guardian' }));
+  render(<AiWorkspace {...props} articles={articles} />); await screen.findByText('Ready');
+  expect(screen.queryByText(/Choose stories/)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Create brief' }));
+  expect(aiApi.brief.mock.calls[0][0].articleIds).toEqual([0, 1, 2, 3, 4, 5, 6, 11]);
 });
