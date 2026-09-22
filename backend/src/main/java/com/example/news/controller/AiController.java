@@ -1,58 +1,53 @@
 package com.example.news.controller;
 
-import com.example.news.ai.AiInsightService;
-import com.example.news.ai.AiResponse;
+import com.example.news.ai.*;
+import com.example.news.service.FeedStore;
 import com.example.news.model.NewsArticle;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.*;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
-
-    private final AiInsightService aiInsightService;
-
-    public AiController(AiInsightService aiInsightService) {
-        this.aiInsightService = aiInsightService;
+    private final AiInsightService insights;
+    private final FeedStore feeds;
+    public AiController(AiInsightService insights, FeedStore feeds) {
+        this.insights = insights;
+        this.feeds = feeds;
     }
-
     @GetMapping("/status")
-    public ResponseEntity<AiStatus> status() {
-        return ResponseEntity.ok(new AiStatus(aiInsightService.isEnabled()));
-    }
-
-    @PostMapping("/summary")
-    public ResponseEntity<AiResponse> summarize(@Valid @RequestBody ArticleRequest request) {
-        return ResponseEntity.ok(aiInsightService.summarize(request.article()));
-    }
-
-    @PostMapping("/why-it-matters")
-    public ResponseEntity<AiResponse> whyItMatters(@Valid @RequestBody ArticleRequest request) {
-        return ResponseEntity.ok(aiInsightService.explainWhyItMatters(request.article()));
-    }
-
+    public AiStatus status() { return new AiStatus(insights.isEnabled(), insights.isEnabled() ? "ready" : "disabled"); }
     @PostMapping("/brief")
-    public ResponseEntity<AiResponse> brief(@Valid @RequestBody ArticlesRequest request) {
-        return ResponseEntity.ok(aiInsightService.dailyBrief(request.articles()));
-    }
-
+    public AiResponse brief(@Valid @RequestBody Selection request) { return insights.dailyBrief(resolve(request)); }
     @PostMapping("/compare")
-    public ResponseEntity<AiResponse> compare(@Valid @RequestBody ArticlesRequest request) {
-        return ResponseEntity.ok(aiInsightService.compare(request.articles()));
+    public AiResponse compare(@Valid @RequestBody Selection request) {
+        List<NewsArticle> articles = resolve(request);
+        if (articles.stream().map(NewsArticle::source).distinct().count() < 2) {
+            throw new IllegalArgumentException("Select stories from at least two publishers to compare coverage.");
+        }
+        return insights.compare(articles);
     }
-
     @PostMapping("/ask")
-    public ResponseEntity<AiResponse> ask(@Valid @RequestBody AskRequest request) {
-        return ResponseEntity.ok(aiInsightService.ask(request.question(), request.articles()));
+    public AiResponse ask(@Valid @RequestBody Question request) {
+        return insights.ask(request.question(), resolve(request.selection()));
     }
-
-    public record AiStatus(boolean enabled) {}
-    public record ArticleRequest(NewsArticle article) {}
-    public record ArticlesRequest(@NotEmpty List<NewsArticle> articles) {}
-    public record AskRequest(@NotBlank String question, @NotEmpty List<NewsArticle> articles) {}
+    @PostMapping("/summary")
+    public AiResponse summary(@Valid @RequestBody Selection request) { return insights.summarize(single(request)); }
+    @PostMapping("/why-it-matters")
+    public AiResponse why(@Valid @RequestBody Selection request) { return insights.explainWhyItMatters(single(request)); }
+    private NewsArticle single(Selection request) {
+        if (request.articleIds().size() != 1) throw new IllegalArgumentException("Select exactly one story.");
+        return resolve(request).getFirst();
+    }
+    private List<NewsArticle> resolve(Selection request) {
+        return feeds.resolve(request.feedId(), request.page(), request.articleIds());
+    }
+    public record AiStatus(boolean enabled, String state) { }
+    public record Selection(@NotBlank @Pattern(regexp = "[a-f0-9-]{36}") String feedId,
+            @Min(1) @Max(100) int page,
+            @NotEmpty @Size(max = 8) List<@NotNull @Min(0) @Max(24) Integer> articleIds) { }
+    public record Question(@NotBlank @Size(max = 500) String question,
+            @NotNull @Valid Selection selection) { }
 }

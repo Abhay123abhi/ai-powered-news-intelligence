@@ -84,7 +84,7 @@ public class NytClient implements NewsProviderClient {
             return new NewsApiResult(totalResults, totalPages, articles);
 
         } catch (Exception ex) {
-            log.error("NYT API error", ex);
+            log.warn("NYT request failed ({})", ex.getClass().getSimpleName());
             if (ex instanceof NewsProviderException providerException) {
                 throw providerException;
             }

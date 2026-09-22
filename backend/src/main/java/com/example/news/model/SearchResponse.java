@@ -3,16 +3,8 @@ package com.example.news.model;
 import java.util.List;
 
 public record SearchResponse(
-        String newsWebsite,
-        String searchKeyword,
-        String city,
-        int page,
-        int pageSize,
-        int totalArticles,
-        int totalPages,
-        Integer prevPage,
-        Integer nextPage,
-        long timeTakenMs,
-        List<NewsArticle> articles
-) {
-}
+        String searchKeyword, String feedId, int page, int pageSize,
+        Integer prevPage, Integer nextPage, long timeTakenMs,
+        String fetchedAt, boolean partial, List<String> unavailableSources,
+        boolean limited, List<NewsArticle> articles
+) { }
