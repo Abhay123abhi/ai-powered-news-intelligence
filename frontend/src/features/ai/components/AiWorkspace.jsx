@@ -136,13 +136,13 @@ export default function AiWorkspace({ articles, feedId, page = 1, feedLoading = 
     {status === 'checking' && <p className="ai-availability-note">Connecting to the shared AI workspace. The first visit can take a little longer.</p>}
     {!configured && status !== 'checking' && <div className="ai-availability-note"><p>AI insights are taking a break. You can still search and read the original reporting.</p><button type="button" onClick={checkAgain}>Check availability</button></div>}
     <div className="ai-controls">
-      <div className={`ai-feature ai-action ${activeLabel === 'Daily brief' ? 'is-active' : ''}`}><div><svg className="ai-tool-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h9l4 4v14H6z M14 3v5h5 M9 12h7 M9 16h7" /></svg><strong>Daily brief</strong><p>Catch up on the key headlines.</p>
+      <div className={`ai-feature ai-action ${activeLabel === 'Daily brief' ? 'is-active' : ''}`}><div><strong>Daily brief</strong><p>Catch up on the key headlines.</p>
         <button type="button" disabled={loading || !canRun} onClick={() => run('Daily brief', signal => aiApi.brief(selection, signal))}>Create brief</button>
       </div></div>
-      <div className={`ai-feature ai-action ${activeLabel === 'Compare coverage' ? 'is-active' : ''}`}><div><svg className="ai-tool-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18 M5 21h14 M4 7h16 M5 7l-3 7h6z M19 7l-3 7h6z" /></svg><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Search both publishers to compare.' : 'See how publishers cover the news.'}</p>
+      <div className={`ai-feature ai-action ${activeLabel === 'Compare coverage' ? 'is-active' : ''}`}><div><strong>Compare coverage</strong><p>{sources.size < 2 ? 'Search both publishers to compare.' : 'See how publishers cover the news.'}</p>
         <button type="button" disabled={loading || !canRun || sources.size < 2} onClick={() => run('Compare coverage', signal => aiApi.compare(selection, signal))}>Compare</button>
       </div></div>
-      <div className={`ai-feature ai-action ${activeLabel === 'Ask the news' ? 'is-active' : ''}`}><div><svg className="ai-tool-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v12H9l-5 4z M8 8h8 M8 12h5" /></svg><strong>Ask the news</strong><p>Go deeper with your own question.</p>
+      <div className={`ai-feature ai-action ${activeLabel === 'Ask the news' ? 'is-active' : ''}`}><div><strong>Ask the news</strong><p>Go deeper with your own question.</p>
         <button type="button" aria-expanded={asking} aria-controls="ai-question-form" disabled={loading || !canRun} onClick={() => { setAsking(value => !value); setResult(null); setError(''); setActiveLabel(asking ? '' : 'Ask the news'); }}>Ask a question</button>
       </div></div>
     </div>
