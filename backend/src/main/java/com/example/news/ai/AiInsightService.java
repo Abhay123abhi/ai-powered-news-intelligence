@@ -82,31 +82,6 @@ public class AiInsightService {
         return aiEnabled && aiProvider.isConfigured();
     }
 
-    public AiResponse summarize(NewsArticle article) {
-        ensureEnabled();
-        List<NewsArticle> articles = safeArticles(List.of(article));
-        String prompt = """
-                Create exactly two sections named 'Summary' and 'Why it matters'.
-                Summary should contain up to 3 short factual items.
-                Why it matters should contain 1 concise item and must not speculate beyond the supplied article.
-
-                ARTICLES:
-                """ + formatArticles(articles);
-        return generate("summary:" + articlesKey(articles), prompt, articles);
-    }
-
-    public AiResponse explainWhyItMatters(NewsArticle article) {
-        ensureEnabled();
-        List<NewsArticle> articles = safeArticles(List.of(article));
-        String prompt = """
-                Create one section named 'Why it matters' with up to 2 concise items.
-                Separate confirmed information from implications and do not speculate beyond the supplied article.
-
-                ARTICLES:
-                """ + formatArticles(articles);
-        return generate("why:" + articlesKey(articles), prompt, articles);
-    }
-
     public AiResponse dailyBrief(List<NewsArticle> articles) {
         ensureEnabled();
         List<NewsArticle> limited = safeArticles(articles).stream().limit(8).toList();
