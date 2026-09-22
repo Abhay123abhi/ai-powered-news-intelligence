@@ -194,3 +194,103 @@
     animation: none !important;
   }
 }
+
+
+/* Hero signal wire: a wide, low-noise data path with one short illuminated packet. */
+.hero-signal-wire {
+  position: absolute;
+  top: 43%;
+  left: 10%;
+  width: 80%;
+  height: 42%;
+  overflow: visible;
+  opacity: .9;
+  pointer-events: none;
+}
+
+.signal-wire-base,
+.signal-wire-runner {
+  fill: none;
+  stroke: url(#heroSignalGradient);
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.signal-wire-base {
+  stroke-width: 1.1;
+  opacity: .2;
+}
+
+.signal-wire-runner {
+  stroke-width: 1.8;
+  stroke-dasharray: 170 830;
+  stroke-dashoffset: 1000;
+  opacity: .92;
+  filter:
+    drop-shadow(0 0 4px rgba(47, 212, 155, .42))
+    drop-shadow(0 0 9px rgba(43, 200, 217, .24));
+  animation: heroSignalTravel 12s linear infinite;
+}
+
+:root:not([data-theme="dark"]) .hero-signal-wire {
+  opacity: .72;
+}
+
+:root:not([data-theme="dark"]) .signal-wire-base {
+  opacity: .17;
+}
+
+:root:not([data-theme="dark"]) .signal-wire-runner {
+  opacity: .78;
+  filter: drop-shadow(0 0 5px rgba(21, 143, 123, .2));
+}
+
+@keyframes heroSignalTravel {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  8% {
+    opacity: .92;
+  }
+  92% {
+    opacity: .92;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .hero-signal-wire {
+    display: block;
+    top: 40%;
+    left: 7%;
+    width: 86%;
+    height: 120px;
+    opacity: .68;
+  }
+
+  .signal-wire-base {
+    stroke-width: .9;
+    opacity: .15;
+  }
+
+  .signal-wire-runner {
+    stroke-width: 1.45;
+    stroke-dasharray: 145 855;
+    filter: drop-shadow(0 0 4px rgba(47, 212, 155, .2));
+    animation-duration: 13.5s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-wire-runner {
+    animation: none !important;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    opacity: .2;
+    filter: none;
+  }
+}
