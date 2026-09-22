@@ -6,6 +6,8 @@ import com.example.news.model.NewsArticle;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,7 +54,7 @@ public class AiController {
     }
 
     public record AiStatus(boolean enabled) {}
-    public record ArticleRequest(NewsArticle article) {}
-    public record ArticlesRequest(@NotEmpty List<NewsArticle> articles) {}
-    public record AskRequest(@NotBlank String question, @NotEmpty List<NewsArticle> articles) {}
+    public record ArticleRequest(@NotNull NewsArticle article) {}
+    public record ArticlesRequest(@NotEmpty @Size(max = 20) List<@NotNull NewsArticle> articles) {}
+    public record AskRequest(@NotBlank @Size(max = 500) String question, @NotEmpty @Size(max = 20) List<@NotNull NewsArticle> articles) {}
 }

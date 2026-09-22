@@ -11,16 +11,16 @@ const aiApi = {
     const { data } = await client.get("/status");
     return data;
   },
-  async brief(articles) {
-    const { data } = await client.post("/brief", { articles });
+  async brief(articles, signal) {
+    const { data } = await client.post("/brief", { articles }, { signal });
     return data;
   },
-  async compare(articles) {
-    const { data } = await client.post("/compare", { articles });
+  async compare(articles, signal) {
+    const { data } = await client.post("/compare", { articles }, { signal });
     return data;
   },
-  async ask(question, articles) {
-    const { data } = await client.post("/ask", { question, articles });
+  async ask(question, articles, signal) {
+    const { data } = await client.post("/ask", { question, articles }, { signal });
     return data;
   }
 };

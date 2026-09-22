@@ -62,6 +62,7 @@ public class AiInsightService {
     private final Duration cacheTtl;
     private final AtomicLong windowStart = new AtomicLong(System.currentTimeMillis());
     private final AtomicInteger requestCount = new AtomicInteger();
+    private final java.util.concurrent.locks.ReentrantLock generationLock = new java.util.concurrent.locks.ReentrantLock();
 
     public AiInsightService(AiProvider aiProvider,
                             AiResponseCache responseCache,
@@ -174,8 +175,8 @@ public class AiInsightService {
     }
 
     private void ensureEnabled() {
-        if (!aiEnabled) throw new IllegalStateException("AI features are currently disabled");
-        if (!aiProvider.isConfigured()) throw new IllegalStateException("AI is not configured");
+        if (!aiEnabled) throw new AiFailure("AI_DISABLED", "AI is disabled in the application configuration.", 503, null, 0);
+        if (!aiProvider.isConfigured()) throw new AiFailure("AI_NOT_CONFIGURED", "The AI provider credential is not configured.", 503, null, 0);
     }
 
     private AiResponse generate(String operationKey, String prompt, List<NewsArticle> articles) {
@@ -183,19 +184,25 @@ public class AiInsightService {
         var cached = responseCache.get(cacheKey);
         if (cached.isPresent()) return cached.get();
 
-        acquireQuota();
-        String raw = aiProvider.generate(SYSTEM_PROMPT, prompt).trim();
-        AiResponse.Content content = parseAndValidateContent(raw, articles.size());
-        List<AiResponse.Citation> citations = buildUsedCitations(content, articles);
-        AiResponse response = new AiResponse(
-                renderText(content),
-                content,
-                citations,
-                aiProvider.modelName(),
-                false
-        );
-        responseCache.put(cacheKey, response, cacheTtl);
-        return response;
+        if (!generationLock.tryLock()) throw new AiFailure("AI_BUSY", "Another AI generation is in progress on this server.", 503, null, 3);
+        try {
+            // Recheck after acquiring the lock in case another request just populated the cache.
+            cached = responseCache.get(cacheKey);
+            if (cached.isPresent()) return cached.get();
+            acquireQuota();
+            String raw = aiProvider.generate(SYSTEM_PROMPT, prompt).trim();
+            AiResponse.Content content = parseAndValidateContent(raw, articles.size());
+            List<AiResponse.Citation> citations = buildUsedCitations(content, articles);
+            AiResponse response = new AiResponse(
+                    renderText(content),
+                    content,
+                    citations,
+                    aiProvider.modelName(),
+                    false
+            );
+            responseCache.put(cacheKey, response, cacheTtl);
+            return response;
+        } finally { generationLock.unlock(); }
     }
 
     private AiResponse.Content parseAndValidateContent(String raw, int sourceCount) {
@@ -221,13 +228,13 @@ public class AiInsightService {
                     .toList();
 
             if (sections.isEmpty()) {
-                throw new IllegalStateException("AI provider returned an empty structured response");
+                throw new AiFailure("AI_INVALID_RESPONSE", "The provider returned no usable structured items.", 502, null, 0);
             }
             return new AiResponse.Content(sections);
-        } catch (IllegalStateException e) {
+        } catch (AiFailure e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("AI provider returned invalid structured content", e);
+            throw new AiFailure("AI_INVALID_RESPONSE", "The provider response did not match the expected JSON structure.", 502, null, 0);
         }
     }
 
@@ -296,7 +303,7 @@ public class AiInsightService {
         }
         if (requestCount.incrementAndGet() > requestsPerMinute) {
             requestCount.decrementAndGet();
-            throw new IllegalStateException("AI request limit reached. Please try again shortly.");
+            throw new AiFailure("AI_APP_RATE_LIMIT", "The application per-minute AI request limit was reached.", 429, null, (int) ((60_000 - (now - windowStart.get()) + 999) / 1000));
         }
     }
 

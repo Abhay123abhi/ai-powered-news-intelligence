@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import aiApi from "../api/aiApi";
+import aiErrorMessage from "../api/aiErrorMessage";
 import "./AiWorkspace.css";
 
 function AiStatus({ enabled }) {
@@ -20,7 +21,7 @@ function DisabledAiWorkspace() {
       <div className="ai-feature"><div><strong>Ask the news</strong><p>Question only the articles already in your feed.</p></div></div>
       <div className="ai-feature"><div><strong>Compare coverage</strong><p>Compare publishers only when the feed contains comparable coverage.</p></div></div>
     </div>
-    <div className="ai-foundation"><span aria-hidden="true">✓</span><p><strong>Graceful fallback</strong><br />Set AI_ENABLED=true to bring the workspace back online.</p></div>
+    <div className="ai-foundation"><span aria-hidden="true">✓</span><p><strong>Graceful fallback</strong><br />AI insights are temporarily unavailable. Please try again later.</p></div>
   </aside>;
 }
 
@@ -72,6 +73,23 @@ export default function AiWorkspace({ articles }) {
   const [enabled, setEnabled] = useState(false);
   const [activeLabel, setActiveLabel] = useState("");
   const resultRef = useRef(null);
+  const pending = useRef(null);
+  const version = useRef(0);
+
+  useEffect(() => {
+    version.current += 1;
+    pending.current?.abort();
+    pending.current = null;
+    setLoading(false);
+    setResult(null);
+    setError("");
+    setActiveLabel("");
+    return () => {
+      version.current += 1;
+      pending.current?.abort();
+      pending.current = null;
+    };
+  }, [articles]);
 
   useEffect(() => {
     let active = true;
@@ -88,30 +106,34 @@ export default function AiWorkspace({ articles }) {
   }, [loading, result, error]);
 
   const run = async (label, action, { clearQuestion = false } = {}) => {
-    if (!enabled || !articles?.length) return;
+    if (!enabled || !articles?.length || pending.current) return;
+    const controller = new AbortController();
+    pending.current = controller;
+    const requestVersion = ++version.current;
     setActiveLabel(label);
     setResult(null);
     setLoading(true);
     setError("");
     try {
-      const response = await action();
+      const response = await action(controller.signal);
+      if (requestVersion !== version.current) return;
       setResult(response || { text: "No AI response returned." });
       if (clearQuestion) setQuestion("");
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.detail ||
-        requestError.response?.data?.message ||
-        "AI is temporarily unavailable."
-      );
+      if (requestVersion !== version.current || controller.signal.aborted) return;
+      setError(aiErrorMessage(requestError));
     } finally {
-      setLoading(false);
+      if (requestVersion === version.current) {
+        pending.current = null;
+        setLoading(false);
+      }
     }
   };
 
   const ask = () => {
     const trimmedQuestion = question.trim();
     if (!trimmedQuestion) return;
-    run("Ask the news", () => aiApi.ask(trimmedQuestion, articles), { clearQuestion: true });
+    run("Ask the news", (signal) => aiApi.ask(trimmedQuestion, articles, signal), { clearQuestion: true });
   };
 
   if (!enabled) return <DisabledAiWorkspace />;
@@ -126,7 +148,7 @@ export default function AiWorkspace({ articles }) {
 
     <div className="ai-controls">
       <div className="ai-feature ai-action">
-        <div><strong>Daily brief</strong><p>Pull distinct developments into one concise view.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Daily brief", () => aiApi.brief(articles))}>Create brief</button></div>
+        <div><strong>Daily brief</strong><p>Pull distinct developments into one concise view.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Daily brief", (signal) => aiApi.brief(articles, signal))}>Create brief</button></div>
       </div>
 
       <div className="ai-feature ai-action">
@@ -134,7 +156,7 @@ export default function AiWorkspace({ articles }) {
       </div>
 
       <div className="ai-feature ai-action">
-        <div><strong>Compare coverage</strong><p>Compare observable emphasis only when stories overlap.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Compare coverage", () => aiApi.compare(articles))}>Compare</button></div>
+        <div><strong>Compare coverage</strong><p>Compare observable emphasis only when stories overlap.</p><button type="button" disabled={loading || !articles?.length} onClick={() => run("Compare coverage", (signal) => aiApi.compare(articles, signal))}>Compare</button></div>
       </div>
     </div>
 
