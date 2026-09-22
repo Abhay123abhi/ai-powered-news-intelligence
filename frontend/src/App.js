@@ -5,7 +5,6 @@ import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
 import "./App.css";
 import "./ai-first.css";
-import "./discover-refresh.css";
 import "./premium-ai.css";
 import "./premium-ai-polish.css";
 import "./premium-search-mobile.css";
