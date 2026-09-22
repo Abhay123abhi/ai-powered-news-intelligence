@@ -1,8 +1,28 @@
-import axios from 'axios';
-const client = axios.create({ baseURL: '/api/ai', timeout: 60000, headers: { Accept: 'application/json' } });
-export default {
-  async status(signal) { return (await client.get('/status', { signal, timeout: 90000 })).data; },
-  async brief(selection, signal) { return (await client.post('/brief', selection, { signal })).data; },
-  async compare(selection, signal) { return (await client.post('/compare', selection, { signal })).data; },
-  async ask(question, selection, signal) { return (await client.post('/ask', { question, selection }, { signal })).data; },
+import axios from "axios";
+
+const client = axios.create({
+  baseURL: "/api/ai",
+  timeout: 90000,
+  headers: { Accept: "application/json", "Content-Type": "application/json" }
+});
+
+const aiApi = {
+  async status() {
+    const { data } = await client.get("/status");
+    return data;
+  },
+  async brief(articles, signal) {
+    const { data } = await client.post("/brief", { articles }, { signal });
+    return data;
+  },
+  async compare(articles, signal) {
+    const { data } = await client.post("/compare", { articles }, { signal });
+    return data;
+  },
+  async ask(question, articles, signal) {
+    const { data } = await client.post("/ask", { question, articles }, { signal });
+    return data;
+  }
 };
+
+export default aiApi;

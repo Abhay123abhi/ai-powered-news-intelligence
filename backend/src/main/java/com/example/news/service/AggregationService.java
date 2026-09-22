@@ -2,119 +2,178 @@ package com.example.news.service;
 
 import com.example.news.client.NewsProviderClient;
 import com.example.news.exception.NewsUnavailableException;
-import com.example.news.model.*;
+import com.example.news.model.NewsApiResult;
+import com.example.news.model.NewsArticle;
+import com.example.news.model.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.time.*;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AggregationService {
-    private static final Logger log = LoggerFactory.getLogger(AggregationService.class);
-    private static final Set<String> SEARCH_STOP_WORDS = Set.of(
-            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "with");
-    private final List<NewsProviderClient> providers;
-    private final FeedStore store;
-    private final ExecutorService providerExecutor;
-    @Value("${news.provider-timeout:25s}") private Duration providerTimeout;
-    @Value("${news.guardian.enabled:true}") private boolean guardianEnabled;
-    @Value("${news.nyt.enabled:true}") private boolean nytEnabled;
-    @Value("${news.max-provider-pages:5}") private int maxProviderPages;
 
-    public AggregationService(List<NewsProviderClient> providers, FeedStore store, ExecutorService providerExecutor) {
+    private static final Logger log = LoggerFactory.getLogger(AggregationService.class);
+
+    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_PAGE_SIZE = 10;
+    private static final Set<String> SEARCH_STOP_WORDS = Set.of(
+            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "is", "of", "on", "or", "the", "to", "with"
+    );
+
+    private final List<NewsProviderClient> providers;
+    private final CacheService cacheService;
+
+    private final ExecutorService providerExecutor;
+
+    @Value("${news.provider-timeout}")
+    private Duration providerTimeout;
+
+    @Value("${news.guardian.enabled:true}")
+    private boolean guardianEnabled;
+
+    @Value("${news.nyt.enabled:true}")
+    private boolean nytEnabled;
+
+    public AggregationService(List<NewsProviderClient> providers, CacheService cacheService,
+                              ExecutorService providerExecutor) {
         this.providers = providers;
-        this.store = store;
+        this.cacheService = cacheService;
         this.providerExecutor = providerExecutor;
     }
 
-    public SearchResponse search(String keyword, int page, int pageSize, String feedId) {
-        long started = System.currentTimeMillis();
-        String query = normalizeSearchKeyword(keyword);
-        if (page < 1 || pageSize < 1 || pageSize > 25 || query.length() > 120) {
-            throw new IllegalArgumentException("Use a query up to 120 characters and 1–25 stories per page.");
-        }
-        if (feedId == null && page != 1) throw com.example.news.exception.ApiException.expired();
-        String key = UUID.nameUUIDFromBytes((query.toLowerCase(Locale.ROOT) + ":" + pageSize)
-                .getBytes(java.nio.charset.StandardCharsets.UTF_8)).toString();
-        FeedStore.Feed feed = feedId == null ? store.start(key, query, pageSize) : store.get(feedId);
-        synchronized (feed) {
-            if (!feed.query.equalsIgnoreCase(query) || feed.pageSize != pageSize) {
-                throw new IllegalArgumentException("Start a new search when changing the topic or page size.");
-            }
-            int lastServed = feed.servedPages.stream().mapToInt(Integer::intValue).max().orElse(0);
-            if (page > lastServed + 1) throw new IllegalArgumentException("Browse pages in order.");
-            if (!feed.initialized) {
-                providers.stream().filter(p -> isProviderEnabled(p.getProviderName()))
-                        .forEach(p -> feed.nextPages.put(p.getProviderName(), 1));
-                if (feed.nextPages.isEmpty()) throw new NewsUnavailableException("News sources are temporarily unavailable.");
-                feed.initialized = true;
-            }
-            // Append ranked batches; never reorder a page already shown or discard overflow.
-            while (feed.articles.size() < page * pageSize && hasMore(feed)) fetchBatch(feed);
-            int from = Math.min((page - 1) * pageSize, feed.articles.size());
-            int to = Math.min(from + pageSize, feed.articles.size());
-            feed.servedPages.add(page);
-            store.save(feed);
-            boolean next = to < feed.articles.size() || hasMore(feed);
-            return new SearchResponse(query, feed.id, page, pageSize, page > 1 ? page - 1 : null,
-                    next ? page + 1 : null, System.currentTimeMillis() - started,
-                    Instant.ofEpochMilli(feed.createdAt).toString(), !feed.unavailable.isEmpty(),
-                    List.copyOf(feed.unavailable), feed.limited, List.copyOf(feed.articles.subList(from, to)));
-        }
-    }
+    public SearchResponse search(String keyword, int page, int pageSize) {
 
-    private boolean hasMore(FeedStore.Feed feed) {
-        return feed.nextPages.keySet().stream().anyMatch(p -> !feed.exhausted.contains(p));
-    }
+        Instant startTime = Instant.now();
 
-    private void fetchBatch(FeedStore.Feed feed) {
-        Map<String, CompletableFuture<NewsApiResult>> tasks = new LinkedHashMap<>();
-        for (NewsProviderClient provider : providers) {
-            String name = provider.getProviderName();
-            if (!feed.nextPages.containsKey(name) || feed.exhausted.contains(name)) continue;
-            int upstreamPage = feed.nextPages.get(name);
-            tasks.put(name, CompletableFuture.supplyAsync(() -> provider.search(
-                    "latest".equals(feed.query) ? null : feed.query, upstreamPage, 10), providerExecutor)
-                    .orTimeout(providerTimeout.toMillis(), TimeUnit.MILLISECONDS));
-        }
-        List<NewsArticle> batch = new ArrayList<>();
-        int successes = 0;
-        for (var task : tasks.entrySet()) {
-            String name = task.getKey();
-            try {
-                NewsApiResult result = task.getValue().join();
-                successes++;
-                batch.addAll(result.articles());
-                int current = feed.nextPages.get(name);
-                if (result.articles().isEmpty() || current >= result.totalPages() || current >= maxProviderPages) {
-                    feed.exhausted.add(name);
-                    if (current >= maxProviderPages && current < result.totalPages()) feed.limited = true;
+        String searchQuery = normalizeSearchKeyword(keyword);
+        String providerQuery = "latest".equals(searchQuery) ? null : searchQuery;
+        int currentPage = (page < 1) ? DEFAULT_PAGE : page;
+        int size = (pageSize <= 0) ? DEFAULT_PAGE_SIZE : Math.min(pageSize, 25);
+
+        List<NewsArticle> allArticles = new ArrayList<>();
+        int totalAvailableArticles = 0;
+        int availablePages = currentPage;
+
+        NewsApiResult cached = loadCachedResult(searchQuery, currentPage, size);
+
+        if (cached != null && !cached.articles().isEmpty()) {
+            allArticles.addAll(cached.articles());
+            totalAvailableArticles = cached.totalResults();
+            availablePages = Math.max(currentPage, cached.totalPages());
+            log.info("Cache hit for keyword {}, page {}, page size {}", searchQuery, currentPage, size);
+        } else {
+            List<NewsProviderClient> activeProviders = providers.stream()
+                    .filter(provider -> isProviderEnabled(provider.getProviderName()))
+                    .toList();
+
+            if (activeProviders.isEmpty()) {
+                throw new NewsUnavailableException("No news provider is enabled");
+            }
+
+            List<ProviderTask> providerTasks = activeProviders.stream()
+                    .map(provider -> new ProviderTask(
+                            provider.getProviderName(),
+                            CompletableFuture.supplyAsync(
+                                            () -> provider.search(providerQuery, currentPage, size),
+                                            providerExecutor
+                                    )
+                                    .orTimeout(providerTimeout.toMillis(), TimeUnit.MILLISECONDS)
+                    ))
+                    .toList();
+
+            int successfulProviders = 0;
+            int timedOutProviders = 0;
+
+            for (ProviderTask task : providerTasks) {
+                try {
+                    NewsApiResult result = task.future().join();
+                    successfulProviders++;
+                    allArticles.addAll(result.articles());
+                    totalAvailableArticles += result.totalResults();
+                    availablePages = Math.max(availablePages, result.totalPages());
+                } catch (CompletionException ex) {
+                    Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                    if (cause instanceof TimeoutException) {
+                        timedOutProviders++;
+                        log.warn("Provider {} timed out after {} ms",
+                                task.providerName(), providerTimeout.toMillis());
+                    } else {
+                        String message = cause.getMessage() == null
+                                ? cause.getClass().getSimpleName()
+                                : cause.getMessage();
+                        log.warn("Provider {} failed: {}", task.providerName(), message);
+                    }
                 }
-                feed.nextPages.put(name, current + 1);
-            } catch (CompletionException ex) {
-                feed.unavailable.add(name);
-                feed.exhausted.add(name);
-                log.warn("News source {} unavailable ({})", name, ex.getCause().getClass().getSimpleName());
+            }
+
+            if (successfulProviders == 0) {
+                if (timedOutProviders == activeProviders.size()) {
+                    throw new NewsUnavailableException(
+                            "All news providers timed out after " + providerTimeout.toSeconds()
+                                    + " seconds. Check upstream connectivity or increase NEWS_PROVIDER_TIMEOUT."
+                    );
+                }
+                throw new NewsUnavailableException(
+                        "No news provider completed successfully. Configure GUARDIAN_API_KEY or NYT_API_KEY and check the server logs."
+                );
+            }
+
+            if (!allArticles.isEmpty()) {
+                saveCachedResult(searchQuery, currentPage, size,
+                        new NewsApiResult(totalAvailableArticles, availablePages, List.copyOf(allArticles)));
             }
         }
-        if (successes == 0 && feed.articles.isEmpty()) {
-            // Allow a subsequent user retry; do not preserve a permanently failed empty session.
-            feed.exhausted.clear();
-            feed.unavailable.clear();
-            throw new NewsUnavailableException("The news sources are taking a break. Please try again shortly.");
-        }
-        Set<String> urls = new HashSet<>();
-        feed.articles.forEach(a -> urls.add(normalizeUrl(a.url())));
-        Comparator<NewsArticle> order = "latest".equals(feed.query) ? newestFirst() : keywordRelevanceOrder(feed.query);
-        batch.stream().filter(a -> a != null && a.url() != null && a.url().startsWith("https://"))
-                .sorted(order).filter(a -> urls.add(normalizeUrl(a.url()))).forEach(feed.articles::add);
+
+        Comparator<NewsArticle> resultOrder = "latest".equals(searchQuery)
+                ? newestFirst()
+                : keywordRelevanceOrder(searchQuery);
+
+        // Providers return a page each. Deduplicate first, then rank the merged page for the user's intent.
+        List<NewsArticle> uniqueArticles = allArticles.stream()
+                .filter(a -> a.url() != null && !a.url().isBlank())
+                .collect(Collectors.toMap(
+                        a -> normalizeUrl(a.url()),
+                        a -> a,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ))
+                .values().stream()
+                .sorted(resultOrder)
+                .limit(size)
+                .toList();
+
+        long timeTaken = Duration.between(startTime, Instant.now()).toMillis();
+        int totalArticles = Math.max(totalAvailableArticles, uniqueArticles.size());
+        int totalPages = availablePages;
+        Integer nextPage = currentPage < totalPages ? currentPage + 1 : null;
+
+        return new SearchResponse(
+                "News Aggregator",
+                searchQuery,
+                "Global",
+                currentPage,
+                size,
+                totalArticles,
+                totalPages,
+                currentPage > 1 ? currentPage - 1 : null,
+                nextPage,
+                timeTaken,
+                uniqueArticles
+        );
     }
 
     private Comparator<NewsArticle> newestFirst() {
-        return Comparator.comparing(this::publishedInstant, Comparator.reverseOrder());
+        return Comparator.comparing(
+                NewsArticle::publishedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        );
     }
 
     private Comparator<NewsArticle> keywordRelevanceOrder(String query) {
@@ -171,7 +230,7 @@ public class AggregationService {
     }
 
     private String normalizeUrl(String url) {
-        String s = url.trim();
+        String s = url.trim().toLowerCase();
         int queryIdx = s.indexOf('?');
         if (queryIdx > 0) s = s.substring(0, queryIdx);
         if (s.endsWith("/")) s = s.substring(0, s.length() - 1);
@@ -189,9 +248,26 @@ public class AggregationService {
                 : normalized;
     }
 
-    private Instant publishedInstant(NewsArticle article) {
-        try { return java.time.OffsetDateTime.parse(article.publishedAt()).toInstant(); }
-        catch (Exception ignored) { return Instant.MIN; }
+    private NewsApiResult loadCachedResult(String keyword, int page, int pageSize) {
+        try {
+            return cacheService.load(keyword, page, pageSize);
+        } catch (RuntimeException ex) {
+            log.warn("Unable to read cached articles for keyword {}", keyword, ex);
+            return null;
+        }
     }
 
+    private void saveCachedResult(String keyword, int page, int pageSize, NewsApiResult result) {
+        try {
+            cacheService.save(keyword, page, pageSize, result);
+        } catch (RuntimeException ex) {
+            log.warn("Unable to cache articles for keyword {}", keyword, ex);
+        }
+    }
+
+    private record ProviderTask(
+            String providerName,
+            CompletableFuture<NewsApiResult> future
+    ) {
+    }
 }

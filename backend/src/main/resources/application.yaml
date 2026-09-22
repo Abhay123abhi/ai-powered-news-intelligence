@@ -2,6 +2,8 @@ server:
   port: ${PORT:8080}
 
 spring:
+  cache:
+    type: redis
   cloud:
     openfeign:
       client:
@@ -27,15 +29,14 @@ nyt:
 
 ai:
   enabled: ${AI_ENABLED:true}
-  requests-per-minute: ${AI_REQUESTS_PER_MINUTE:5}
-  requests-per-day: ${AI_REQUESTS_PER_DAY:20}
+  requests-per-minute: ${AI_REQUESTS_PER_MINUTE:15}
   cache-ttl: ${AI_CACHE_TTL:30m}
   gemini:
     api-key: ${GEMINI_API_KEY:}
     model: ${GEMINI_MODEL:gemini-3.6-flash}
     connect-timeout: ${GEMINI_CONNECT_TIMEOUT:5s}
-    read-timeout: ${GEMINI_READ_TIMEOUT:15s}
-    max-retries: ${GEMINI_MAX_RETRIES:1}
+    read-timeout: ${GEMINI_READ_TIMEOUT:25s}
+    max-retries: ${GEMINI_MAX_RETRIES:2}
     retry-backoff: ${GEMINI_RETRY_BACKOFF:400ms}
     circuit-failure-threshold: ${GEMINI_CIRCUIT_FAILURE_THRESHOLD:4}
     circuit-open-duration: ${GEMINI_CIRCUIT_OPEN_DURATION:30s}
@@ -45,9 +46,8 @@ news:
     enabled: true
   nyt:
     enabled: true
-  provider-timeout: ${NEWS_PROVIDER_TIMEOUT:25s}
-  feed-ttl: ${NEWS_FEED_TTL:15m}
-  max-provider-pages: ${NEWS_MAX_PROVIDER_PAGES:5}
+  cache-ttl: ${NEWS_CACHE_TTL:30m}
+  provider-timeout: ${NEWS_PROVIDER_TIMEOUT:35s}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
 

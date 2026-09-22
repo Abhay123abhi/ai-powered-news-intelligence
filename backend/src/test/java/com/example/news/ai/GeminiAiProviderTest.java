@@ -1,59 +1,58 @@
 package com.example.news.ai;
 
-import com.example.news.exception.ApiException;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
-import java.time.Duration;
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.assertj.core.api.Assertions.*;
 
 class GeminiAiProviderTest {
-    @Test void doesNotRetryQuotaErrorsAndHonorsRetryAfter() {
-        RestClient.Builder builder = RestClient.builder();
+    @Test void quotaDoesNotRetryAndKeepsItsReasonDuringCooldown() {
+        var builder = RestClient.builder().baseUrl("https://example.test");
         var server = MockRestServiceServer.bindTo(builder).build();
-        AiBudget budget = mock(AiBudget.class);
-        var provider = provider(builder, budget);
-        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"))
-                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "120"));
-        assertThatThrownBy(() -> provider.generate("system", "question")).isInstanceOfSatisfying(ApiException.class, ex -> {
-            assertThat(ex.status).isEqualTo(HttpStatus.TOO_MANY_REQUESTS); assertThat(ex.retryAfter).isEqualTo(120);
+        server.expect(requestTo("https://example.test/v1beta/models/test-model:generateContent"))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS).header("Retry-After", "120").body("private provider payload"));
+        var provider = new GeminiAiProvider(builder.build(), "test-key", 2);
+        for (int i = 0; i < 2; i++) {
+            assertThatThrownBy(() -> provider.generate("private prompt", "private article"))
+                    .isInstanceOfSatisfying(AiFailure.class, error -> {
+                        assertThat(error.code()).isEqualTo("AI_PROVIDER_QUOTA");
+                        assertThat(error.upstreamStatus()).isEqualTo(429);
+                        assertThat(error.retryAfter()).isBetween(1, 120);
+                        assertThat(error.getMessage()).doesNotContain("private", "test-key");
+                    });
+        }
+        server.verify();
+    }
+    @Test void accessDeniedPreservesStatusWithoutProviderBody() {
+        var builder = RestClient.builder().baseUrl("https://example.test");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(anything()).andRespond(withStatus(HttpStatus.FORBIDDEN).body("secret"));
+        var provider = new GeminiAiProvider(builder.build(), "key", 2);
+        assertThatThrownBy(() -> provider.generate("", "")).isInstanceOfSatisfying(AiFailure.class, e -> {
+            assertThat(e.code()).isEqualTo("AI_ACCESS_DENIED");
+            assertThat(e.upstreamStatus()).isEqualTo(403);
+            assertThat(e.getMessage()).doesNotContain("secret");
         });
-        verify(budget, times(1)).acquire(); server.verify();
+        server.verify();
     }
-    @Test void countsEachRetryAndReturnsTextAfterTransientFailure() {
-        RestClient.Builder builder = RestClient.builder();
+    @Test void transientFailureRetriesAndReturnsSuccessfulResponse() {
+        var builder = RestClient.builder().baseUrl("https://example.test");
         var server = MockRestServiceServer.bindTo(builder).build();
-        AiBudget budget = mock(AiBudget.class);
-        var provider = provider(builder, budget);
-        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"))
-                .andRespond(withServerError());
-        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"))
-                .andExpect(header("x-goog-api-key", "test-key"))
-                .andRespond(withSuccess("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"ok\"}]},\"finishReason\":\"STOP\"}]}", MediaType.APPLICATION_JSON));
-        assertThat(provider.generate("system", "question")).isEqualTo("ok");
-        verify(budget, times(2)).acquire(); server.verify();
+        server.expect(anything()).andRespond(withServerError());
+        server.expect(anything()).andRespond(withSuccess("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"answer\"}]}}]}", MediaType.APPLICATION_JSON));
+        assertThat(new GeminiAiProvider(builder.build(), "key", 1).generate("", "")).isEqualTo("answer");
+        server.verify();
     }
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.CsvSource({"400,AI_REQUEST_REJECTED", "403,AI_ACCESS_DENIED", "404,AI_MODEL_UNAVAILABLE"})
-    void distinguishesPermanentProviderFailuresWithoutRetry(int status, String code) {
-        RestClient.Builder builder = RestClient.builder();
+    @Test void truncatedOutputHasSpecificDiagnosticCode() {
+        var builder = RestClient.builder().baseUrl("https://example.test");
         var server = MockRestServiceServer.bindTo(builder).build();
-        AiBudget budget = mock(AiBudget.class);
-        var provider = provider(builder, budget);
-        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/models/test-model:generateContent"))
-                .andRespond(withStatus(HttpStatus.valueOf(status)).body("secret provider detail"));
-        assertThatThrownBy(() -> provider.generate("system", "question")).isInstanceOfSatisfying(ApiException.class, ex -> {
-            assertThat(ex.code).isEqualTo(code);
-            assertThat(ex.retryAfter).isZero();
-            assertThat(ex.getMessage()).doesNotContain("secret");
-        });
-        verify(budget, times(1)).acquire(); server.verify();
-    }
-    private GeminiAiProvider provider(RestClient.Builder builder, AiBudget budget) {
-        return new GeminiAiProvider(builder.baseUrl("https://generativelanguage.googleapis.com").build(), budget, "test-key", "test-model", 1, Duration.ofMillis(1), 4, Duration.ofSeconds(30));
+        server.expect(anything()).andRespond(withSuccess("{\"candidates\":[{\"finishReason\":\"MAX_TOKENS\"}]}", MediaType.APPLICATION_JSON));
+        assertThatThrownBy(() -> new GeminiAiProvider(builder.build(), "key", 0).generate("", ""))
+                .isInstanceOfSatisfying(AiFailure.class, e -> assertThat(e.code()).isEqualTo("AI_OUTPUT_LIMIT"));
+        server.verify();
     }
 }

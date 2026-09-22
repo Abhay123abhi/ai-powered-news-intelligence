@@ -43,8 +43,7 @@ public class RedisAiResponseCache implements AiResponseCache {
         } catch (JsonProcessingException ignored) {
             // AI should remain usable even if a response cannot be cached.
         } catch (RuntimeException ignored) {
-            // A completed insight can still be returned if writing the cache fails.
-            // Subsequent new generations must pass the separate fail-closed budget check.
+            // Redis outages degrade to an uncached AI request rather than breaking the feature.
         }
     }
 }

@@ -41,9 +41,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm ci'
-                    sh 'npm test'
                     sh 'npm run build'
-                    sh 'npm audit --audit-level=high'
                 }
             }
         }

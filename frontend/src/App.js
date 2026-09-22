@@ -1,9 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import newsApi from "./features/news/api/newsApi";
 import SearchForm from "./features/news/components/SearchForm";
 import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
-import "./styles/app.css";
+import "./App.css";
+import "./ai-first.css";
+import "./discover-refresh.css";
+import "./premium-ai.css";
+import "./premium-ai-polish.css";
+import "./premium-search-mobile.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -20,16 +25,6 @@ function labelForTopic(topic) {
 }
 
 export default function App() {
-  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 720px)').matches);
-  const newsRequest = useRef(null);
-  const newsVersion = useRef(0);
-  const attempted = useRef({ keyword: DEFAULT_QUERY, page: 1, pageSize: DEFAULT_PAGE_SIZE });
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 720px)');
-    const update = () => setIsMobile(media.matches);
-    media.addEventListener('change', update);
-    return () => { media.removeEventListener('change', update); newsRequest.current?.abort(); };
-  }, []);
   const [theme, setTheme] = useState(getSavedTheme);
   const [mobileView, setMobileView] = useState("discover");
   const [search, setSearch] = useState({ keyword: DEFAULT_QUERY, pageSize: DEFAULT_PAGE_SIZE });
@@ -38,29 +33,23 @@ export default function App() {
   const [slowRequest, setSlowRequest] = useState(false);
   const [error, setError] = useState("");
 
-  const loadNews = useCallback(async (keyword, page, pageSize, feedId) => {
-    newsRequest.current?.abort();
-    const controller = new AbortController(); newsRequest.current = controller;
-    const version = ++newsVersion.current;
-    attempted.current = { keyword, page, pageSize, feedId };
+  const loadNews = useCallback(async (keyword, page, pageSize) => {
     setLoading(true);
     setSlowRequest(false);
     setError("");
     try {
-      const response = await newsApi.search(keyword, page, pageSize, feedId, controller.signal);
-      if (version !== newsVersion.current) return;
+      const response = await newsApi.search(keyword, page, pageSize);
       setData(response);
       setSearch({ keyword, pageSize });
     } catch (requestError) {
-      if (controller.signal.aborted || version !== newsVersion.current) return;
-      if (requestError.response?.status === 410) attempted.current = { keyword, page: 1, pageSize };
       setError(
         requestError.response?.data?.detail ||
         requestError.response?.data?.message ||
         "We couldn't load the news right now. Please try again."
       );
     } finally {
-      if (version === newsVersion.current) { setLoading(false); setSlowRequest(false); }
+      setLoading(false);
+      setSlowRequest(false);
     }
   }, []);
 
@@ -99,21 +88,13 @@ export default function App() {
   };
   const handlePageChange = (page) => {
     setMobileView("discover");
-    loadNews(search.keyword, page, search.pageSize, data.feedId);
+    loadNews(search.keyword, page, search.pageSize);
   };
   const handleTopicChange = (topic) => {
     setMobileView("discover");
     loadNews(topic, 1, search.pageSize);
   };
 
-  function handleTabKey(event) {
-    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
-    if (!keys.includes(event.key)) return;
-    event.preventDefault();
-    const next = event.key === 'Home' ? 'discover' : event.key === 'End' ? 'ai' : mobileView === 'discover' ? 'ai' : 'discover';
-    setMobileView(next);
-    document.getElementById(`tab-${next}`)?.focus();
-  }
   return <div className={`app-shell mobile-view-${mobileView}`}>
     <header className="site-header">
       <nav className="topbar" aria-label="Primary navigation">
@@ -122,8 +103,8 @@ export default function App() {
           <span className="brand-copy"><strong>Newsroom</strong><small>INTELLIGENCE</small></span>
         </a>
         <div className="nav-links" aria-label="Page sections">
-          <a href="#ai-workspace" onClick={() => setMobileView("ai")}>AI workspace</a>
-          <a href="#stories" onClick={() => setMobileView("discover")}>Discover</a>
+          <a href="#ai-workspace">AI workspace <span>Live</span></a>
+          <a href="#stories">Discover</a>
         </div>
         <button className="theme-toggle" type="button" onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
           <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
@@ -135,11 +116,11 @@ export default function App() {
     <main>
       <section className="mobile-view-switcher" aria-label="Mobile workspace switcher">
         <div className="mobile-view-tabs" role="tablist" aria-label="Choose a mobile view">
-          <button type="button" role="tab" id="tab-discover" aria-controls="workspace-panel" tabIndex={mobileView === "discover" ? 0 : -1} onKeyDown={handleTabKey} aria-selected={mobileView === "discover"} className={`mobile-view-tab ${mobileView === "discover" ? "active" : ""}`} onClick={() => setMobileView("discover")}>
+          <button type="button" role="tab" aria-selected={mobileView === "discover"} className={`mobile-view-tab ${mobileView === "discover" ? "active" : ""}`} onClick={() => setMobileView("discover")}>
             <span>Discover</span>
             <small>Search + news</small>
           </button>
-          <button type="button" role="tab" id="tab-ai" aria-controls="workspace-panel" tabIndex={mobileView === "ai" ? 0 : -1} onKeyDown={handleTabKey} aria-selected={mobileView === "ai"} className={`mobile-view-tab ${mobileView === "ai" ? "active" : ""}`} onClick={() => setMobileView("ai")}>
+          <button type="button" role="tab" aria-selected={mobileView === "ai"} className={`mobile-view-tab ${mobileView === "ai" ? "active" : ""}`} onClick={() => setMobileView("ai")}>
             <span>AI workspace</span>
             <small>Brief + Q&amp;A</small>
           </button>
@@ -147,7 +128,6 @@ export default function App() {
         <p className="mobile-view-note">{mobileViewNote}</p>
       </section>
 
-      <div id="workspace-panel" role={isMobile ? "tabpanel" : undefined} aria-labelledby={isMobile ? `tab-${mobileView}` : undefined} tabIndex={isMobile ? 0 : undefined}>
       <section className="hero premium-hero">
         <div className="hero-ambient" aria-hidden="true">
           <span className="ambient-orb orb-one" />
@@ -160,7 +140,7 @@ export default function App() {
         <div className="hero-copy-block premium-copy">
           <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE</div>
           <h1>Search the news.<br /><em>Think beyond it.</em></h1>
-          <p>Search The Guardian and The New York Times. Get a quick AI brief, ask a question, or compare their coverage.</p>
+          <p>Trusted reporting becomes an AI research workspace. Search The Guardian and The New York Times, then generate a briefing, ask grounded questions, and compare how publishers frame the same story.</p>
 
           <div className="hero-value-row" aria-label="AI workspace capabilities">
             <span><i /> Source grounded</span>
@@ -184,8 +164,8 @@ export default function App() {
 
         <div className="hero-ai premium-ai-stage">
           <div className="ai-stage-halo" aria-hidden="true" />
-          <div className="ai-stage-label" aria-hidden="true"><span /> YOUR RESEARCH WORKSPACE</div>
-          <AiWorkspace articles={data.articles || []} feedId={data.feedId} page={data.page} feedLoading={loading || Boolean(error)} onRefresh={() => loadNews(search.keyword, 1, search.pageSize)} />
+          <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
+          <AiWorkspace articles={data.articles || []} />
         </div>
       </section>
 
@@ -197,19 +177,15 @@ export default function App() {
 
         {slowRequest && <div className="startup-banner" role="status"><span aria-hidden="true">◷</span><div><strong>Waking the news service</strong><p>The free server is starting. Your first request can take about a minute.</p></div></div>}
 
-        {!loading && !error && data.fetchedAt && <p className="feed-note">Feed started at {new Date(data.fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Pages preserve your reading order.</p>}
-        {!loading && data.partial && <p className="feed-note" role="status">Some sources are unavailable ({data.unavailableSources?.join(', ')}). Showing the reporting we could retrieve.</p>}
-        {!loading && data.limited && !data.nextPage && <p className="feed-note">You’ve reached the demo’s search limit. Try a more specific topic to explore further.</p>}
         <div className="feed-column">
-          <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => { const last = attempted.current; loadNews(last.keyword, last.page, last.pageSize, last.feedId); }} />
-          {!loading && !error && (data.articles?.length > 0 || data.prevPage) && <nav className="pagination" aria-label="News result pages">
+          <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)} />
+          {!loading && !error && data.articles?.length > 0 && <nav className="pagination" aria-label="News result pages">
             <button type="button" onClick={() => handlePageChange(data.prevPage)} disabled={!data.prevPage}><span aria-hidden="true">←</span> Previous</button>
-            <span>Page <strong>{data.page || 1}</strong></span>
+            <span>Page <strong>{data.page || 1}</strong>{data.totalPages > 1 && ` of ${data.totalPages}`}</span>
             <button type="button" onClick={() => handlePageChange(data.nextPage)} disabled={!data.nextPage}>Next <span aria-hidden="true">→</span></button>
           </nav>}
         </div>
       </section>
-      </div>
     </main>
   </div>;
 }

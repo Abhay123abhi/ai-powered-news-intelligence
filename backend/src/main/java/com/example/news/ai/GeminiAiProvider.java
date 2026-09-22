@@ -18,9 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 public class GeminiAiProvider implements AiProvider {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GeminiAiProvider.class);
     private final RestClient restClient;
-    private final AiBudget budget;
     private final String apiKey;
     private final String model;
     private final int maxRetries;
@@ -29,26 +27,27 @@ public class GeminiAiProvider implements AiProvider {
     private final Duration circuitOpenDuration;
     private final AtomicInteger consecutiveFailures = new AtomicInteger();
     private final AtomicLong circuitOpenUntil = new AtomicLong();
+    private final AtomicLong quotaUntil = new AtomicLong();
 
     @org.springframework.beans.factory.annotation.Autowired
     public GeminiAiProvider(
-            RestClient.Builder builder, AiBudget budget,
+            RestClient.Builder builder,
             @Value("${ai.gemini.api-key:}") String apiKey,
             @Value("${ai.gemini.model:gemini-3.6-flash}") String model,
             @Value("${ai.gemini.connect-timeout:5s}") Duration connectTimeout,
-            @Value("${ai.gemini.read-timeout:15s}") Duration readTimeout,
-            @Value("${ai.gemini.max-retries:1}") int maxRetries,
+            @Value("${ai.gemini.read-timeout:25s}") Duration readTimeout,
+            @Value("${ai.gemini.max-retries:2}") int maxRetries,
             @Value("${ai.gemini.retry-backoff:400ms}") Duration retryBackoff,
             @Value("${ai.gemini.circuit-failure-threshold:4}") int circuitFailureThreshold,
             @Value("${ai.gemini.circuit-open-duration:30s}") Duration circuitOpenDuration) {
-        this(client(builder, connectTimeout, readTimeout), budget, apiKey, model, maxRetries,
-                retryBackoff, circuitFailureThreshold, circuitOpenDuration);
-    }
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Math.toIntExact(connectTimeout.toMillis()));
+        requestFactory.setReadTimeout(Math.toIntExact(readTimeout.toMillis()));
 
-    GeminiAiProvider(RestClient restClient, AiBudget budget, String apiKey, String model, int maxRetries,
-                     Duration retryBackoff, int circuitFailureThreshold, Duration circuitOpenDuration) {
-        this.restClient = restClient;
-        this.budget = budget;
+        this.restClient = builder
+                .baseUrl("https://generativelanguage.googleapis.com")
+                .requestFactory(requestFactory)
+                .build();
         this.apiKey = apiKey;
         this.model = model;
         this.maxRetries = Math.max(0, maxRetries);
@@ -57,17 +56,20 @@ public class GeminiAiProvider implements AiProvider {
         this.circuitOpenDuration = circuitOpenDuration;
     }
 
-    private static RestClient client(RestClient.Builder builder, Duration connectTimeout, Duration readTimeout) {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Math.toIntExact(connectTimeout.toMillis()));
-        factory.setReadTimeout(Math.toIntExact(readTimeout.toMillis()));
-        return builder.baseUrl("https://generativelanguage.googleapis.com").requestFactory(factory).build();
+    GeminiAiProvider(RestClient client, String apiKey, int maxRetries) {
+        this.restClient = client;
+        this.apiKey = apiKey;
+        this.model = "test-model";
+        this.maxRetries = maxRetries;
+        this.retryBackoff = Duration.ofMillis(1);
+        this.circuitFailureThreshold = 4;
+        this.circuitOpenDuration = Duration.ofSeconds(30);
     }
 
     @Override
     public String generate(String systemPrompt, String userPrompt) {
         if (!isConfigured()) {
-            throw new IllegalStateException("AI is not configured. Set GEMINI_API_KEY.");
+            throw new AiFailure("AI_NOT_CONFIGURED", "The AI provider credential is not configured.", 503, null, 0);
         }
         ensureCircuitClosed();
 
@@ -76,29 +78,25 @@ public class GeminiAiProvider implements AiProvider {
 
         for (int attempt = 1; attempt <= attempts; attempt++) {
             try {
-                budget.acquire();
                 String result = execute(systemPrompt, userPrompt);
                 consecutiveFailures.set(0);
                 circuitOpenUntil.set(0);
                 return result;
             } catch (RestClientResponseException e) {
-                // Never log provider bodies, prompts, request URLs, or credentials.
-                log.warn("Gemini request failed: upstreamStatus={}, category={}", e.getStatusCode().value(), failureCategory(e.getStatusCode().value()));
                 if (e.getStatusCode().value() == 429) {
-                    int wait = retryAfter(e);
-                    circuitOpenUntil.set(System.currentTimeMillis() + wait * 1000L);
-                    throw com.example.news.exception.ApiException.quota(wait);
+                    int delay = retryAfter(e);
+                    quotaUntil.accumulateAndGet(System.currentTimeMillis() + delay * 1000L, Math::max);
+                    throw new AiFailure("AI_PROVIDER_QUOTA", "The AI provider returned a rate or quota limit (429).", 429, 429, delay);
                 }
                 if (!isTransient(e) || attempt == attempts) {
                     if (isTransient(e)) recordTransientFailure();
-                    throw upstreamFailure(e.getStatusCode().value());
+                    throw providerFailure(e.getStatusCode().value());
                 }
                 lastFailure = e;
             } catch (ResourceAccessException e) {
                 if (attempt == attempts) {
                     recordTransientFailure();
-                    throw new com.example.news.exception.ApiException(org.springframework.http.HttpStatus.GATEWAY_TIMEOUT,
-                            "AI_TIMEOUT", "AI took too long to respond. Your news feed is still available.", 30);
+                    throw new AiFailure("AI_TIMEOUT", "The connection to the AI provider timed out or failed.", 504, null, 30);
                 }
                 lastFailure = e;
             }
@@ -133,54 +131,50 @@ public class GeminiAiProvider implements AiProvider {
                 .body(GeminiResponse.class);
 
         if (response == null || response.candidates() == null || response.candidates().isEmpty()) {
-            throw new IllegalStateException("AI provider returned no content");
+            throw new AiFailure("AI_EMPTY_RESPONSE", "AI provider returned no content", 502, null, 0);
         }
 
         Candidate candidate = response.candidates().getFirst();
         if ("MAX_TOKENS".equals(candidate.finishReason())) {
-            throw new IllegalStateException("AI response exceeded the output limit. Please try again.");
+            throw new AiFailure("AI_OUTPUT_LIMIT", "AI response exceeded the output limit. Please try again.", 502, null, 0);
         }
         if (candidate.content() == null || candidate.content().parts() == null || candidate.content().parts().isEmpty()) {
-            throw new IllegalStateException("AI provider returned an empty response");
+            throw new AiFailure("AI_EMPTY_RESPONSE", "AI provider returned an empty response", 502, null, 0);
         }
 
         String text = candidate.content().parts().stream()
                 .map(Part::text)
                 .filter(part -> part != null && !part.isBlank())
                 .reduce((left, right) -> left + "\n" + right)
-                .orElseThrow(() -> new IllegalStateException("AI provider returned an empty response"));
+                .orElseThrow(() -> new AiFailure("AI_EMPTY_RESPONSE", "AI provider returned an empty response", 502, null, 0));
 
         if (text.isBlank()) {
-            throw new IllegalStateException("AI provider returned an empty response");
+            throw new AiFailure("AI_EMPTY_RESPONSE", "AI provider returned an empty response", 502, null, 0);
         }
         return text;
     }
 
-    private String failureCategory(int status) {
-        return switch (status) {
+    private AiFailure providerFailure(int status) {
+        String code = switch (status) {
             case 400 -> "AI_REQUEST_REJECTED";
             case 401, 403 -> "AI_ACCESS_DENIED";
             case 404 -> "AI_MODEL_UNAVAILABLE";
-            case 429 -> "AI_QUOTA_REACHED";
             default -> "AI_UPSTREAM_ERROR";
         };
+        return new AiFailure(code, "The AI provider rejected or failed the request (HTTP " + status + ").",
+                502, status, status >= 500 ? 30 : 0);
     }
 
-    private com.example.news.exception.ApiException upstreamFailure(int status) {
-        String message = switch (status) {
-            case 400 -> "AI could not accept this request. Please try another insight; news browsing still works.";
-            case 401, 403 -> "AI access is currently unavailable. You can still browse the news.";
-            case 404 -> "The AI model is currently unavailable. You can still browse the news.";
-            default -> "The AI service is temporarily unavailable. Please try again shortly.";
-        };
-        return new com.example.news.exception.ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY,
-                failureCategory(status), message, status >= 500 ? 30 : 0);
-    }
-
-    private int retryAfter(RestClientResponseException exception) {
-        String value = exception.getResponseHeaders() == null ? null : exception.getResponseHeaders().getFirst("Retry-After");
-        try { return Math.max(1, Math.min(86400, Integer.parseInt(value))); }
-        catch (Exception ignored) { return 60; }
+    private int retryAfter(RestClientResponseException failure) {
+        String value = failure.getResponseHeaders() == null ? null : failure.getResponseHeaders().getFirst("Retry-After");
+        try { return (int) Math.max(1, Math.min(86400, Long.parseLong(value))); }
+        catch (Exception ignored) {
+            try {
+                long seconds = java.time.Duration.between(java.time.Instant.now(),
+                        java.time.ZonedDateTime.parse(value, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME).toInstant()).toSeconds();
+                return (int) Math.max(1, Math.min(86400, seconds));
+            } catch (Exception invalid) { return 60; }
+        }
     }
 
     private boolean isTransient(RestClientResponseException exception) {
@@ -189,11 +183,14 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private void ensureCircuitClosed() {
+        long quotaRemaining = quotaUntil.get() - System.currentTimeMillis();
+        if (quotaRemaining > 0) throw new AiFailure("AI_PROVIDER_QUOTA",
+                "AI provider quota cooldown is active after a previous 429 response.",
+                429, 429, (int) ((quotaRemaining + 999) / 1000));
         long openUntil = circuitOpenUntil.get();
         long now = System.currentTimeMillis();
         if (openUntil > now) {
-            throw new com.example.news.exception.ApiException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI_COOLDOWN", "AI is taking a short break. Please try again shortly.", (int)((openUntil - now) / 1000) + 1);
+            throw new AiFailure("AI_COOLDOWN", "The provider circuit is paused after repeated transient failures.", 503, null, (int) ((openUntil - now + 999) / 1000));
         }
         if (openUntil != 0 && openUntil <= now) {
             circuitOpenUntil.compareAndSet(openUntil, 0);
@@ -215,7 +212,7 @@ public class GeminiAiProvider implements AiProvider {
             Thread.sleep(exponential + jitter);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("AI request retry interrupted", e);
+            throw new AiFailure("AI_INTERRUPTED", "AI retry was interrupted.", 503, null, 0);
         }
     }
 

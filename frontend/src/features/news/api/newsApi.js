@@ -7,9 +7,9 @@ const client = axios.create({
 });
 
 const newsApi = {
-  async search(keyword, page, pageSize, feedId, signal) {
+  async search(keyword, page, pageSize) {
     const { data } = await client.get("/news", {
-      params: { keyword: keyword.trim(), page, pageSize, feedId }, signal
+      params: { keyword: keyword.trim(), page, pageSize }
     });
     return data;
   }

@@ -38,7 +38,7 @@
 
   <!-- Browser -->
   <rect x="70" y="190" width="245" height="190" class="box" fill="#ffffff"/>
-  <text x="95" y="225" class="darkh">React 18 + Vite</text>
+  <text x="95" y="225" class="darkh">React 18 Frontend</text>
   <text x="95" y="254" class="darkt">Search + pagination</text>
   <text x="95" y="278" class="darkt">Guardian / NYT feed</text>
   <text x="95" y="302" class="darkt">AI Workspace</text>
@@ -52,22 +52,22 @@
   <text x="485" y="185" class="h">Spring Boot API · Java 21</text>
   <text x="485" y="218" class="t">NewsController / AggregationService</text>
   <text x="485" y="243" class="t">AiController / AiInsightService</text>
-  <text x="485" y="268" class="t">Trusted feed context + input bounds</text>
+  <text x="485" y="268" class="t">Prompt grounding + input bounds</text>
   <text x="485" y="293" class="t">Versioned AI cache-key generation</text>
   <text x="485" y="318" class="t">Structured JSON parsing</text>
   <text x="485" y="343" class="t">Source-ID citation validation</text>
   <text x="485" y="368" class="t">Provider abstractions + validation</text>
-  <text x="485" y="393" class="t">Feature flag + concurrency guard</text>
+  <text x="485" y="393" class="t">Feature flag + request guard</text>
   <rect x="485" y="405" width="180" height="24" rx="12" fill="#ffffff" opacity=".16"/>
   <text x="500" y="421" style="font:700 10px Inter,Segoe UI,Arial,sans-serif;fill:#fff">DOCKER WEB SERVICE</text>
 
   <!-- Redis -->
   <rect x="455" y="530" width="300" height="155" class="box" fill="#ef4444"/>
   <text x="485" y="568" class="h">Redis</text>
-  <text x="485" y="598" class="t">Buffered feed sessions</text>
+  <text x="485" y="598" class="t">News search cache</text>
   <text x="485" y="623" class="t">AI response cache</text>
-  <text x="485" y="648" class="t">Shared minute/day attempt budget</text>
-  <text x="485" y="672" class="s" style="fill:#fee2e2">Local news fallback; new AI pauses</text>
+  <text x="485" y="648" class="t">Configurable TTLs</text>
+  <text x="485" y="672" class="s" style="fill:#fee2e2">Cache outage degrades to live / uncached calls</text>
 
   <!-- External news -->
   <rect x="935" y="135" width="365" height="210" class="box" fill="#11182a" stroke="#3e4b70"/>
@@ -87,7 +87,7 @@
   <text x="905" y="538" class="t">AiProvider → GeminiAiProvider</text>
   <text x="905" y="563" class="t">Gemini model via REST</text>
   <text x="905" y="588" class="t">Timeout + transient retry</text>
-  <text x="905" y="613" class="t">Budgeted retries + 429 cooldown</text>
+  <text x="905" y="613" class="t">Exponential backoff + jitter</text>
   <text x="905" y="638" class="t">Circuit breaker</text>
   <text x="905" y="663" class="t">Structured JSON generation</text>
   <text x="905" y="688" class="t">Daily brief · Ask · Compare</text>
@@ -128,5 +128,5 @@
   <!-- Footer principles -->
   <rect x="70" y="790" width="1230" height="64" rx="16" fill="#ffffff" opacity=".055" stroke="#ffffff" stroke-opacity=".08"/>
   <text x="95" y="817" class="label">DESIGN PRINCIPLE</text>
-  <text x="95" y="840" class="t">AI is optional. News stays usable during failures. Redis guards shared AI attempts; citations reference server-held excerpts.</text>
+  <text x="95" y="840" class="t">AI is optional. Redis accelerates both news and AI requests; Gemini failures are contained, and only validated structured output reaches the UI.</text>
 </svg>

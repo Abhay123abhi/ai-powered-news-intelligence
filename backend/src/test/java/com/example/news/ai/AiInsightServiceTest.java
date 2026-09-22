@@ -71,6 +71,7 @@ class AiInsightServiceTest {
                 cache,
                 new ObjectMapper(),
                 true,
+                15,
                 Duration.ofMinutes(30)
         );
 

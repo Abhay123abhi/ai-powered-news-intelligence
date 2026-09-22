@@ -1,5 +1,6 @@
+import "./NewsList.css";
 
-const FALLBACK_IMAGE = "/news-placeholder.svg";
+const FALLBACK_IMAGE = "https://placehold.co/900x560/172033/E8EDF6?text=Newsroom";
 
 function formatDate(value) {
   if (!value || Number.isNaN(new Date(value).getTime())) return "Date unavailable";
@@ -32,7 +33,7 @@ function StoryCard({ article, variant = "standard" }) {
     <div className="image-wrap">
       <img
         src={article.imageUrl || FALLBACK_IMAGE}
-        onError={(event) => { event.currentTarget.onerror = null; if (!event.currentTarget.src.endsWith(FALLBACK_IMAGE)) event.currentTarget.src = FALLBACK_IMAGE; }}
+        onError={(event) => { event.currentTarget.src = FALLBACK_IMAGE; }}
         alt=""
         loading={isLead ? "eager" : "lazy"}
       />
