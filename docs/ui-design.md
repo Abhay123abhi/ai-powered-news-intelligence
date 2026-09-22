@@ -27,3 +27,25 @@ The design choices are our interpretation of these product patterns, not claims 
 ## Verification
 
 Frontend tests and production build pass. Browser screenshot verification remains outstanding because the browser binary download failed in the execution environment. Review at 1440, 1280, 768, 390 and 360 CSS-pixel widths, with both themes and reduced motion enabled, before merging the experiment.
+
+## Charcoal and gold preview
+
+Branch: `feat/newsroom-editorial-gold`, based on `feat/newsroom-3d-design`.
+
+The reference informs the palette and editorial surfaces only. Existing search,
+pagination, publisher links, brief, compare, Q&A, example dismissal, status messages,
+and mobile tabs remain intact. No subscription, profile, or new content feature is added.
+
+The reversible theme is in `frontend/src/styles/editorial.css`, imported after the
+existing layout styles. Light mode uses warm ivory with dark ochre text; dark mode
+uses graphite with pale gold. Gold buttons retain dark labels in both modes.
+Animations include the existing moving panel edge, staggered card entrance,
+flow pulses, and hover depth. No background wires or video are added.
+Reduced motion disables animation, and reduced transparency uses solid surfaces.
+
+Preview locally with `git fetch origin`, then
+`git switch --track origin/feat/newsroom-editorial-gold` and run `npm start`
+from `frontend`. Existing backend configuration is unchanged.
+
+Validation: frontend 11 tests and production build pass. Check both theme modes,
+mobile tabs, long AI answers, keyboard focus, and reduced-motion settings before merge.
