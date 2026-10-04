@@ -14,10 +14,6 @@ export default function SearchForm({ initialKeyword, initialPageSize, onSearch, 
   }
 
   return <form className={`search-form ${loading ? "is-searching" : ""}`} onSubmit={handleSubmit} aria-busy={loading}>
-    <svg className="search-border" aria-hidden="true" focusable="false">
-      <rect pathLength="100" />
-      <rect className="search-border-head" pathLength="100" />
-    </svg>
     <label className="search-field" htmlFor="news-search">
       <span className="search-icon" aria-hidden="true">⌕</span>
       <span className="sr-only">Search news</span>
@@ -31,6 +27,6 @@ export default function SearchForm({ initialKeyword, initialPageSize, onSearch, 
         <option value={20}>20 stories</option>
       </select>
     </label>
-    <button type="submit" disabled={loading || !keyword.trim()}>{loading ? <><i className="button-loader" aria-hidden="true" />Searching</> : <>Search news <span className="search-submit-icon" aria-hidden="true">→</span></>}</button>
+    <button type="submit" disabled={loading || !keyword.trim()}>{loading ? <>Searching…</> : <>Search news <span className="search-submit-icon" aria-hidden="true">→</span></>}</button>
   </form>;
 }
