@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -157,6 +158,40 @@ class AggregationServiceTest {
         SearchResponse response = service.search("java", 1, 12);
 
         assertThat(response.articles()).containsExactly(article);
+    }
+
+    @Test
+    void returnsAvailableResultsWhenOneProviderFails() {
+        NewsProviderClient guardian = mock(NewsProviderClient.class);
+        NewsProviderClient nyt = mock(NewsProviderClient.class);
+        AggregationService multiProviderService =
+                new AggregationService(List.of(guardian, nyt), cacheService, executor);
+
+        ReflectionTestUtils.setField(multiProviderService, "providerTimeout", Duration.ofSeconds(2));
+        ReflectionTestUtils.setField(multiProviderService, "guardianEnabled", true);
+        ReflectionTestUtils.setField(multiProviderService, "nytEnabled", true);
+
+        NewsArticle nytArticle = new NewsArticle(
+                "NYT headline",
+                "NYT description",
+                "https://example.com/nyt",
+                "The New York Times",
+                "2026-08-23T11:00:00Z",
+                null
+        );
+
+        when(guardian.getProviderName()).thenReturn("Guardian");
+        when(nyt.getProviderName()).thenReturn("NYT");
+        when(guardian.search("java", 1, 12))
+                .thenThrow(new NewsProviderException("Guardian unavailable"));
+        when(nyt.search("java", 1, 12))
+                .thenReturn(new NewsApiResult(8, 1, List.of(nytArticle)));
+
+        SearchResponse response = multiProviderService.search("java", 1, 12);
+
+        assertThat(response.articles()).containsExactly(nytArticle);
+        assertThat(response.totalArticles()).isEqualTo(8);
+        assertThat(response.totalPages()).isEqualTo(1);
     }
 
     @Test
