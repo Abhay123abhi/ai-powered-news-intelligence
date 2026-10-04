@@ -38,14 +38,29 @@ body {
 
 .site-header {
   color: var(--text);
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .28);
-  backdrop-filter: blur(18px) saturate(135%);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--surface) 72%, transparent),
+      color-mix(in srgb, var(--primary-soft) 34%, var(--surface) 38%),
+      color-mix(in srgb, var(--surface) 72%, transparent));
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 10px 32px rgba(16, 22, 38, .07);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
 }
 
 :root[data-theme="dark"] .site-header {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .02);
+  background:
+    linear-gradient(90deg,
+      rgba(10, 15, 24, .72),
+      rgba(33, 30, 65, .62),
+      rgba(10, 15, 24, .72));
+  border-bottom-color: rgba(142, 136, 255, .14);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.035) inset,
+    0 14px 38px rgba(0,0,0,.18);
 }
 
 .topbar {
@@ -368,7 +383,7 @@ body {
 }
 
 .content {
-  max-width: 1180px;
+  max-width: 1320px;
   padding-top: 38px;
   padding-bottom: 64px;
 }
