@@ -1,17 +1,27 @@
 # AI-Powered News Intelligence Platform
 
-A news search and reading app built with Java 21, Spring Boot, React, and Redis. It combines articles from The Guardian and The New York Times, with optional summaries, briefings, Q&A, and coverage comparison using Google Gemini.
+News is fragmented across publishers, upstream APIs can fail independently, and AI-generated summaries are only useful when readers can trace them back to the reporting they came from.
 
-## Features
+This project brings those concerns into one product: it searches The Guardian and The New York Times concurrently, normalizes both feeds into one experience, keeps the core news flow available during partial failures, and adds optional Gemini-powered briefings, Q&A, summaries, and coverage comparison grounded in the articles currently on screen.
 
-- Search both publishers through one API.
-- Fetch articles concurrently using Java 21 virtual threads and `CompletableFuture`.
-- Normalize, deduplicate, sort, and paginate results.
-- Cache news searches and AI responses in Redis.
-- Return available results when one news provider fails.
-- Generate briefings, summaries, and answers from the retrieved articles, with source links.
-- Handle transient Gemini failures with timeouts, retries, and a circuit breaker.
-- Enable or disable AI independently of news search.
+**Live demo:** https://abhay123abhi-news-web.onrender.com/
+
+## Why this project exists
+
+- Read and search multiple publishers from one consistent feed.
+- Keep news browsing useful when one upstream provider or Redis is unavailable.
+- Reduce repeated provider and AI work with Redis caching.
+- Use AI as an optional intelligence layer rather than a dependency for core news search.
+- Keep AI output tied to source references from the current feed instead of presenting unsupported answers as independently verified facts.
+
+## Engineering highlights
+
+- Concurrent provider fan-out using Java 21 virtual threads and `CompletableFuture`.
+- Provider abstraction plus normalization into one domain model.
+- Partial-result fallback when one news provider fails.
+- Redis cache-aside for both news search and AI responses.
+- Structured Gemini output with backend source-ID validation.
+- Timeouts, retry/backoff for retriable upstream failures, quota cooldown handling, and circuit breaking.
 
 ## Architecture
 
@@ -23,7 +33,7 @@ If `AI_ENABLED=false`, Gemini is removed from the request path while Guardian + 
 
 The browser never calls Gemini directly and never receives the Gemini API key. React calls `/api/ai/*` on the Spring Boot backend.
 
-The default model is `gemini-3.6-flash`, which Google currently lists with free-of-charge input and output on the Gemini API Free Tier. Free-tier requests are still subject to Google's usage limits, so `429 RESOURCE_EXHAUSTED` is handled as a transient failure.
+The default model is `gemini-3.6-flash`. The project is designed to work with Gemini free-tier quota, so quota limits still matter. When Gemini returns `429 RESOURCE_EXHAUSTED`, the backend respects `Retry-After` when available, enters a temporary quota cooldown, and fails fast during that cooldown instead of repeatedly retrying the same request.
 
 Available operations:
 
@@ -180,13 +190,12 @@ transient failure?
               fail fast temporarily
 ```
 
-Retries apply to transient conditions such as:
+Retries apply to retriable provider failures such as:
 
-- HTTP `429`,
 - HTTP `5xx`,
 - network/resource access failures.
 
-Non-transient client errors are not repeatedly retried.
+HTTP `429` is handled separately as provider quota pressure: the backend records a cooldown from `Retry-After` when possible and rejects new Gemini calls until the cooldown expires. Non-transient client errors are not repeatedly retried.
 
 Default settings:
 
@@ -532,7 +541,8 @@ The React application constructs these payloads from the current feed automatica
 | Both news providers fail | API returns a clear service-unavailable response |
 | Redis unavailable for news | Live provider calls continue |
 | Redis unavailable for AI | AI falls back to an uncached Gemini request |
-| Gemini returns `429`, `5xx`, or network failure | Retry with exponential backoff + jitter |
+| Gemini returns `429` | Respect provider cooldown / `Retry-After` and fail fast until the cooldown expires |
+| Gemini returns `5xx` or a network failure | Retry with exponential backoff + jitter |
 | Gemini repeatedly fails transiently | Circuit opens temporarily and requests fail fast |
 | Gemini returns malformed structured content | Backend rejects the invalid AI response |
 | Gemini returns unknown citation IDs | Invalid source IDs are removed before response |
