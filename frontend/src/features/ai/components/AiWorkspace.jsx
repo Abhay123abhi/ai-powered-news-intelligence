@@ -21,7 +21,7 @@ function DisabledAiWorkspace() {
       <div className="ai-feature"><div><strong>Ask the news</strong><p>Question only the articles already in your feed.</p></div></div>
       <div className="ai-feature"><div><strong>Compare coverage</strong><p>Compare publishers only when the feed contains comparable coverage.</p></div></div>
     </div>
-    <div className="ai-foundation"><span aria-hidden="true">✓</span><p><strong>Graceful fallback</strong><br />AI insights are temporarily unavailable. Please try again later.</p></div>
+    <div className="ai-foundation"><span aria-hidden="true">!</span><p><strong>AI insights unavailable</strong><br />AI insights are temporarily unavailable. Please try again later.</p></div>
   </aside>;
 }
 
