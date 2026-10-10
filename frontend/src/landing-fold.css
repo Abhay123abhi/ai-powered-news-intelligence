@@ -1,0 +1,14 @@
+/* Landing fold and gradient heading descenders only. */
+.premium-copy h1 { overflow: visible; line-height: 1.07; }
+.premium-copy h1 em {
+  padding-bottom: .12em;
+  margin-bottom: -.12em;
+  line-height: 1.1;
+}
+@media (min-width: 1081px) {
+  .hero.premium-hero {
+    min-height: calc(100vh - 71px);
+    min-height: calc(100svh - 71px);
+    align-items: center;
+  }
+}

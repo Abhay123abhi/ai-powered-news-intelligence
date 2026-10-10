@@ -1,0 +1,119 @@
+/*
+ * Light-mode readability polish only.
+ * Every rule below is scoped to non-dark themes; existing dark visuals,
+ * motion, layout, and interaction styles are intentionally untouched.
+ */
+:root:not([data-theme="dark"]) {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-soft: #f7f9fe;
+  --text: #171c2e;
+  --muted: #525d74;
+  --line: #dce3ef;
+  --primary: #514adf;
+  --primary-soft: #eeedff;
+  --hero: #ffffff;
+  --hero-2: #fbfcff;
+  --shadow: 0 12px 30px rgba(30, 41, 75, .075);
+  --shadow-strong: 0 22px 58px rgba(33, 43, 79, .12);
+}
+
+/* White canvas with very subtle violet/cyan ambience, not a grey wash. */
+:root:not([data-theme="dark"]) body,
+:root:not([data-theme="dark"]) .app-shell {
+  background: #ffffff;
+}
+
+:root:not([data-theme="dark"]) .site-header {
+  background: rgba(255, 255, 255, .95);
+  border-bottom-color: #e4e8f2;
+  box-shadow: 0 8px 28px rgba(26, 40, 74, .045);
+}
+
+:root:not([data-theme="dark"]) .premium-hero {
+  background:
+    radial-gradient(circle at 89% 13%, rgba(118, 87, 255, .095), transparent 24rem),
+    radial-gradient(circle at 62% 94%, rgba(43, 200, 217, .055), transparent 22rem),
+    linear-gradient(125deg, #ffffff 0%, #ffffff 55%, #fafbff 100%);
+  border-bottom-color: #e8ebf3;
+}
+
+:root:not([data-theme="dark"]) .premium-copy h1 {
+  color: #151a2b;
+}
+
+:root:not([data-theme="dark"]) .hero-copy-block > p,
+:root:not([data-theme="dark"]) .ai-intro,
+:root:not([data-theme="dark"]) .story-description {
+  color: #4f5b72;
+}
+
+/* Distinct cards: brighter glass, clearer outlines and readable content. */
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-panel {
+  border-color: #dce0f2;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(118, 87, 255, .075), transparent 17rem),
+    #ffffff;
+  box-shadow:
+    0 24px 65px rgba(52, 56, 105, .12),
+    0 4px 15px rgba(36, 46, 83, .05),
+    inset 0 1px 0 #ffffff;
+}
+
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-feature {
+  border-color: #dde3f2;
+  background: linear-gradient(150deg, #ffffff, #f9faff);
+  box-shadow: 0 7px 18px rgba(45, 52, 91, .055);
+}
+
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-feature:hover {
+  border-color: #b5b1f8;
+  background: linear-gradient(145deg, #ffffff, #f3f2ff);
+  box-shadow: 0 15px 31px rgba(72, 63, 145, .12);
+}
+
+:root:not([data-theme="dark"]) .hero-value-row span,
+:root:not([data-theme="dark"]) .source-chip,
+:root:not([data-theme="dark"]) .ai-stage-label {
+  color: #46546d;
+  border-color: #e0e5f0;
+  background: rgba(255, 255, 255, .96);
+}
+
+:root:not([data-theme="dark"]) .search-form {
+  border-color: #d9dded;
+  background: #ffffff;
+  box-shadow: 0 17px 43px rgba(43, 52, 93, .105);
+}
+
+:root:not([data-theme="dark"]) .page-size select {
+  color: #414c67;
+  border-color: #e4e7f0;
+  background: #f9faff;
+}
+
+:root:not([data-theme="dark"]) .quick-topics button {
+  color: #4e5871;
+  border-color: #dfe3ef;
+  background: #ffffff;
+}
+
+/* Editorial cards should stand out from the clean, white page. */
+:root:not([data-theme="dark"]) .story-card {
+  border-color: #e1e5ef;
+  background: #ffffff;
+  box-shadow: 0 9px 28px rgba(30, 40, 76, .075);
+}
+
+:root:not([data-theme="dark"]) .story-card:hover {
+  border-color: #b8b3f4;
+  box-shadow: 0 19px 40px rgba(42, 47, 99, .13);
+}
+
+:root:not([data-theme="dark"]) .result-metrics,
+:root:not([data-theme="dark"]) .state-card,
+:root:not([data-theme="dark"]) .ai-insight-card {
+  border-color: #dfe4ef;
+  background-color: #ffffff;
+}
