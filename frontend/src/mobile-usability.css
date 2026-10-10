@@ -212,8 +212,7 @@
     touch-action: manipulation;
   }
   .hero-ai .ai-question input { min-width: 0; font-size: 16px; }
-  .ai-inline-sources a,
-  .ai-citation-strip a { min-height: 44px; }
+  .ai-inline-sources a { min-height: 44px; }
 
   /* Stop anchored content from hiding behind the sticky header. */
   #stories,

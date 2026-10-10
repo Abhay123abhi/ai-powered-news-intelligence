@@ -484,34 +484,6 @@ a:focus-visible {
   cursor: not-allowed;
 }
 
-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  max-width: 1264px;
-  padding: 28px 0 35px;
-  margin: 0 auto;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 10px;
-}
-
-footer > div {
-  display: grid;
-  gap: 4px;
-}
-
-footer p {
-  margin: 0;
-}
-
-.footer-brand {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 750;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -553,10 +525,6 @@ footer p {
     border-bottom: 0;
   }
 
-  footer {
-    margin-right: 28px;
-    margin-left: 28px;
-  }
 }
 
 @media (max-width: 720px) {
@@ -626,12 +594,6 @@ footer p {
     border-bottom: 1px solid var(--line);
   }
 
-  footer {
-    align-items: start;
-    flex-direction: column;
-    margin-right: 18px;
-    margin-left: 18px;
-  }
 }
 
 @media (max-width: 430px) {

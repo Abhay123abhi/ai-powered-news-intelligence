@@ -56,7 +56,9 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => { loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE); }, [loadNews]);
+  useEffect(() => {
+    loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE);
+  }, [loadNews]);
   useEffect(() => {
     if (!loading) return undefined;
     const timer = window.setTimeout(() => setSlowRequest(true), 10000);
@@ -108,103 +110,221 @@ export default function App() {
     loadNews(topic, 1, search.pageSize);
   };
 
-  return <div className={`app-shell mobile-view-${mobileView}`}>
-    <header className="site-header">
-      <nav className="topbar" aria-label="Primary navigation">
-        <a className="brand" href="/" aria-label="Newsroom home">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span className="brand-copy"><strong>Newsroom</strong><small>INTELLIGENCE</small></span>
-        </a>
-        <div className="nav-links" aria-label="Page sections">
-          <a href="#ai-workspace">AI workspace <span>Live</span></a>
-          <a href="#stories">Discover</a>
-        </div>
-        <button className="theme-toggle" type="button" onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}>
-          <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
-          <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
+  return (
+    <div className={`app-shell mobile-view-${mobileView}`}>
+      <header className="site-header">
+        <nav className="topbar" aria-label="Primary navigation">
+          <a className="brand" href="/" aria-label="Newsroom home">
+            <span className="brand-mark" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span className="brand-copy">
+              <strong>Newsroom</strong>
+              <small>INTELLIGENCE</small>
+            </span>
+          </a>
+
+          <div className="nav-links" aria-label="Page sections">
+            <a href="#ai-workspace">
+              AI workspace <span>Live</span>
+            </a>
+            <a href="#stories">Discover</a>
+          </div>
+
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
+            <span className="theme-label">{theme === "dark" ? "Light" : "Dark"}</span>
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        <section className="hero premium-hero">
+          <div className="hero-ambient" aria-hidden="true">
+            <span className="ambient-orb orb-one" />
+            <span className="ambient-orb orb-two" />
+            <span className="ambient-grid" />
+            <span className="signal-line signal-one" />
+            <span className="signal-line signal-two" />
+          </div>
+
+          <div className="hero-copy-block premium-copy">
+            <div className="live-label">
+              <span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE
+            </div>
+            <h1>
+              Search the news.
+              <br />
+              <em>Think beyond it.</em>
+            </h1>
+            <p>
+              Trusted reporting becomes an AI research workspace. Search The Guardian and The New
+              York Times, then generate a briefing, ask grounded questions, and compare how
+              publishers frame the same story.
+            </p>
+
+            <div className="hero-value-row" aria-label="AI workspace capabilities">
+              <span><i /> Source grounded</span>
+              <span><i /> Multi-publisher</span>
+              <span><i /> Gemini powered</span>
+            </div>
+
+            <SearchForm
+              initialKeyword={search.keyword}
+              initialPageSize={search.pageSize}
+              onSearch={handleSearch}
+              loading={loading}
+            />
+
+            <div className="quick-topics" aria-label="Quick topics">
+              <span>Explore</span>
+              {QUICK_TOPICS.map((topic) => (
+                <button
+                  key={topic}
+                  type="button"
+                  className={search.keyword.toLowerCase() === topic ? "selected" : ""}
+                  onClick={() => handleTopicChange(topic)}
+                  disabled={loading}
+                >
+                  {labelForTopic(topic)}
+                </button>
+              ))}
+            </div>
+
+            <div className="source-strip" aria-label="Connected news sources">
+              <span className="source-strip-label">Sources</span>
+              <span className="source-chip guardian-source">
+                <i className="guardian-dot" /> The Guardian
+              </span>
+              <span className="source-chip nyt-source">
+                <i className="nyt-dot" /> The New York Times
+              </span>
+            </div>
+          </div>
+
+          <div className="hero-ai premium-ai-stage">
+            <div className="mobile-ai-context">
+              <span>AI RESEARCH WORKSPACE</span>
+              <strong>{data.articles?.length || 0} stories in context</strong>
+              <p>
+                {data.articles?.length
+                  ? "Create a briefing or ask questions about the stories in your current feed."
+                  : "Search for news in Discover first, then return here to explore it with AI."}
+              </p>
+            </div>
+            <div className="ai-stage-halo" aria-hidden="true" />
+            <div className="ai-stage-label" aria-hidden="true">
+              <span /> LIVE INTELLIGENCE LAYER
+            </div>
+            <AiWorkspace articles={data.articles || []} />
+          </div>
+        </section>
+
+        <section className="content" id="stories" aria-live="polite">
+          <div className="results-header">
+            <div>
+              <p className="section-label">DISCOVER</p>
+              <h2>{resultSummary}</h2>
+            </div>
+            {!loading && !error && (
+              <div className="result-metrics">
+                <span><strong>{data.articles?.length || 0}</strong> shown</span>
+                <span><strong>{sourceCount}</strong> sources</span>
+                {data.timeTakenMs != null && (
+                  <span>
+                    <strong>
+                      {data.timeTakenMs < 1000
+                        ? `${data.timeTakenMs}ms`
+                        : `${(data.timeTakenMs / 1000).toFixed(1)}s`}
+                    </strong>{" "}
+                    response
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {slowRequest && (
+            <div className="startup-banner" role="status">
+              <span aria-hidden="true">◷</span>
+              <div>
+                <strong>Waking the news service</strong>
+                <p>The free server is starting. Your first request can take about a minute.</p>
+              </div>
+            </div>
+          )}
+
+          <div className="feed-column">
+            <NewsList
+              articles={data.articles || []}
+              loading={loading}
+              error={error}
+              onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)}
+            />
+            {!loading && !error && data.articles?.length > 0 && (
+              <nav className="pagination" aria-label="News result pages">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(data.prevPage)}
+                  disabled={!data.prevPage}
+                >
+                  <span aria-hidden="true">←</span> Previous
+                </button>
+                <span>
+                  Page <strong>{data.page || 1}</strong>
+                  {data.totalPages > 1 && ` of ${data.totalPages}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(data.nextPage)}
+                  disabled={!data.nextPage}
+                >
+                  Next <span aria-hidden="true">→</span>
+                </button>
+              </nav>
+            )}
+          </div>
+        </section>
+      </main>
+
+      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        <button
+          type="button"
+          className={mobileView === "discover" ? "is-active" : ""}
+          aria-pressed={mobileView === "discover"}
+          aria-controls="stories"
+          onClick={() => switchMobileView("discover")}
+        >
+          <span className="mobile-nav-icon" aria-hidden="true">▤</span>
+          <span>Discover</span>
+        </button>
+        <button
+          type="button"
+          className="mobile-nav-search"
+          aria-label="Jump to news search"
+          onClick={openMobileSearch}
+        >
+          <span className="mobile-nav-icon" aria-hidden="true">⌕</span>
+          <span>Search</span>
+        </button>
+        <button
+          type="button"
+          className={mobileView === "ai" ? "is-active" : ""}
+          aria-pressed={mobileView === "ai"}
+          aria-controls="ai-workspace"
+          onClick={() => switchMobileView("ai")}
+        >
+          <span className="mobile-nav-icon" aria-hidden="true">✦</span>
+          <span>AI workspace</span>
         </button>
       </nav>
-    </header>
-
-    <main>
-      <section className="hero premium-hero">
-        <div className="hero-ambient" aria-hidden="true">
-          <span className="ambient-orb orb-one" />
-          <span className="ambient-orb orb-two" />
-          <span className="ambient-grid" />
-          <span className="signal-line signal-one" />
-          <span className="signal-line signal-two" />
-        </div>
-
-        <div className="hero-copy-block premium-copy">
-          <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE</div>
-          <h1>Search the news.<br /><em>Think beyond it.</em></h1>
-          <p>Trusted reporting becomes an AI research workspace. Search The Guardian and The New York Times, then generate a briefing, ask grounded questions, and compare how publishers frame the same story.</p>
-
-          <div className="hero-value-row" aria-label="AI workspace capabilities">
-            <span><i /> Source grounded</span>
-            <span><i /> Multi-publisher</span>
-            <span><i /> Gemini powered</span>
-          </div>
-
-          <SearchForm initialKeyword={search.keyword} initialPageSize={search.pageSize} onSearch={handleSearch} loading={loading} />
-
-          <div className="quick-topics" aria-label="Quick topics">
-            <span>Explore</span>
-            {QUICK_TOPICS.map((topic) => <button className={search.keyword.toLowerCase() === topic ? "selected" : ""} type="button" key={topic} onClick={() => handleTopicChange(topic)} disabled={loading}>{labelForTopic(topic)}</button>)}
-          </div>
-
-          <div className="source-strip" aria-label="Connected news sources">
-            <span className="source-strip-label">Sources</span>
-            <span className="source-chip guardian-source"><i className="guardian-dot" /> The Guardian</span>
-            <span className="source-chip nyt-source"><i className="nyt-dot" /> The New York Times</span>
-          </div>
-        </div>
-
-        <div className="hero-ai premium-ai-stage">
-          <div className="mobile-ai-context">
-            <span>AI RESEARCH WORKSPACE</span>
-            <strong>{data.articles?.length || 0} stories in context</strong>
-            <p>{data.articles?.length ? "Create a briefing or ask questions about the stories in your current feed." : "Search for news in Discover first, then return here to explore it with AI."}</p>
-          </div>
-          <div className="ai-stage-halo" aria-hidden="true" />
-          <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
-          <AiWorkspace articles={data.articles || []} />
-        </div>
-      </section>
-
-      <section className="content" id="stories" aria-live="polite">
-        <div className="results-header">
-          <div><p className="section-label">DISCOVER</p><h2>{resultSummary}</h2></div>
-          {!loading && !error && <div className="result-metrics"><span><strong>{data.articles?.length || 0}</strong> shown</span><span><strong>{sourceCount}</strong> sources</span>{data.timeTakenMs != null && <span><strong>{data.timeTakenMs < 1000 ? `${data.timeTakenMs}ms` : `${(data.timeTakenMs / 1000).toFixed(1)}s`}</strong> response</span>}</div>}
-        </div>
-
-        {slowRequest && <div className="startup-banner" role="status"><span aria-hidden="true">◷</span><div><strong>Waking the news service</strong><p>The free server is starting. Your first request can take about a minute.</p></div></div>}
-
-        <div className="feed-column">
-          <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)} />
-          {!loading && !error && data.articles?.length > 0 && <nav className="pagination" aria-label="News result pages">
-            <button type="button" onClick={() => handlePageChange(data.prevPage)} disabled={!data.prevPage}><span aria-hidden="true">←</span> Previous</button>
-            <span>Page <strong>{data.page || 1}</strong>{data.totalPages > 1 && ` of ${data.totalPages}`}</span>
-            <button type="button" onClick={() => handlePageChange(data.nextPage)} disabled={!data.nextPage}>Next <span aria-hidden="true">→</span></button>
-          </nav>}
-        </div>
-      </section>
-    </main>
-
-    <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-      <button type="button" className={mobileView === "discover" ? "is-active" : ""} aria-pressed={mobileView === "discover"} aria-controls="stories" onClick={() => switchMobileView("discover")}>
-        <span className="mobile-nav-icon" aria-hidden="true">▤</span>
-        <span>Discover</span>
-      </button>
-      <button type="button" className="mobile-nav-search" aria-label="Jump to news search" onClick={openMobileSearch}>
-        <span className="mobile-nav-icon" aria-hidden="true">⌕</span>
-        <span>Search</span>
-      </button>
-      <button type="button" className={mobileView === "ai" ? "is-active" : ""} aria-pressed={mobileView === "ai"} aria-controls="ai-workspace" onClick={() => switchMobileView("ai")}>
-        <span className="mobile-nav-icon" aria-hidden="true">✦</span>
-        <span>AI workspace</span>
-      </button>
-    </nav>
-  </div>;
+    </div>
+  );
 }

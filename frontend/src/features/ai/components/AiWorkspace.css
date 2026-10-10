@@ -230,8 +230,7 @@
   gap: 5px;
 }
 
-.ai-inline-sources a,
-.ai-citation-strip a {
+.ai-inline-sources a {
   text-decoration: none;
 }
 
@@ -243,41 +242,6 @@
   background: rgba(20, 184, 122, .08);
   font-size: 7px;
   font-weight: 800;
-}
-
-.ai-citation-strip {
-  display: grid;
-  gap: 7px;
-  padding-top: 11px;
-  border-top: 1px solid var(--line);
-}
-
-.ai-citation-strip > span {
-  color: var(--muted);
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.ai-citation-strip > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.ai-citation-strip a {
-  max-width: 100%;
-  padding: 5px 7px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  color: var(--primary);
-  background: var(--primary-soft);
-  font-size: 8px;
-  font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @keyframes aiPulse {
@@ -305,8 +269,7 @@
     font-size: 11px;
   }
 
-  .ai-inline-sources a,
-  .ai-citation-strip a {
+  .ai-inline-sources a {
     min-height: 28px;
     display: inline-flex;
     align-items: center;

@@ -227,8 +227,7 @@ body {
   text-transform: uppercase;
 }
 
-.source-chip,
-.source-grounding {
+.source-chip {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -237,12 +236,6 @@ body {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 82%, transparent);
-}
-
-.source-grounding {
-  color: color-mix(in srgb, var(--accent) 82%, var(--text));
-  border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 }
 
 .guardian-dot,
@@ -481,10 +474,6 @@ body {
   padding-top: 22px;
 }
 
-footer {
-  max-width: 1180px;
-}
-
 @media (max-width: 1080px) {
   .hero {
     grid-template-columns: 1fr;
@@ -514,8 +503,7 @@ footer {
     font-size: clamp(40px, 12vw, 56px);
   }
 
-  .source-strip-label,
-  .source-grounding {
+  .source-strip-label {
     width: 100%;
   }
 
