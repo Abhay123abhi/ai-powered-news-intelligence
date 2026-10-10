@@ -1,0 +1,228 @@
+/*
+ * Mobile-only usability layer; appended after existing theme styles.
+ * Preserves desktop visuals, original color identities and existing animations.
+ */
+.mobile-bottom-nav,
+.mobile-ai-context { display: none; }
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Replace the top tabs with a thumb-reachable persistent navigation dock. */
+  .mobile-view-switcher { display: none; }
+  .mobile-bottom-nav {
+    position: fixed;
+    z-index: 70;
+    bottom: calc(9px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 12px 36px rgba(16, 20, 42, .19);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+  }
+  .mobile-bottom-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 54px;
+    padding: 6px 4px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .mobile-bottom-nav .mobile-nav-icon {
+    font-family: system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.15;
+  }
+  .mobile-bottom-nav button.is-active {
+    color: var(--primary);
+    border-color: color-mix(in srgb, var(--primary) 24%, var(--line));
+    background: var(--primary-soft);
+  }
+  .mobile-bottom-nav button:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: -2px;
+  }
+  .mobile-bottom-nav .mobile-nav-search {
+    color: var(--primary);
+  }
+  :root[data-theme="dark"] .mobile-bottom-nav {
+    border-color: rgba(143, 146, 218, .27);
+    background: rgba(15, 20, 33, .96);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .4);
+  }
+  :root:not([data-theme="dark"]) .mobile-bottom-nav {
+    border-color: #e2e6f1;
+    background: rgba(255, 255, 255, .98);
+    box-shadow: 0 13px 36px rgba(36, 45, 84, .13);
+  }
+
+  /* Keep a clear theme switch on narrow screens. */
+  .theme-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+
+  /* Show the search sooner without hiding the product identity. */
+  .hero {
+    padding-top: 22px;
+    padding-bottom: 24px;
+    gap: 24px;
+  }
+  .hero h1 {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    font-size: clamp(38px, 10.3vw, 50px);
+    line-height: 1.06;
+  }
+  .hero-copy-block > p {
+    margin-bottom: 18px;
+    font-size: 13px;
+    line-height: 1.55;
+    max-width: 48ch;
+  }
+  .live-label { font-size: 9px; letter-spacing: .12em; }
+  .hero-value-row,
+  .source-strip { display: none; }
+
+  /* Full-width input with a clear search action row. Prevents iOS zoom. */
+  .search-form { padding: 7px; }
+  .search-field { min-height: 47px; }
+  .search-form input { font-size: 16px; min-height: 44px; }
+  .search-form > button,
+  .page-size select { min-height: 46px; }
+  .quick-topics {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-top: 13px;
+    padding: 1px 0 5px;
+  }
+  .quick-topics::-webkit-scrollbar { display: none; }
+  .quick-topics > span {
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .quick-topics button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 13px;
+    touch-action: manipulation;
+  }
+
+  /* More of the feed stays above the fold, without sacrificing images. */
+  .content {
+    padding-top: 20px;
+    padding-bottom: 32px;
+  }
+  .results-header { margin-bottom: 13px; }
+  .results-header h2 { font-size: clamp(26px, 7.5vw, 34px); }
+  .news-list { gap: 14px; }
+  .news-grid { gap: 13px; }
+  .featured-story .image-wrap {
+    height: 215px;
+    min-height: 215px;
+  }
+  .featured-story .story-content { padding: 20px; }
+  .featured-story .story-content h3 { font-size: clamp(23px, 6vw, 28px); }
+  .news-grid .image-wrap,
+  .news-grid .story-card:nth-child(7n) .image-wrap {
+    height: 170px;
+    min-height: 170px;
+  }
+  .news-grid .story-content,
+  .news-grid .story-card:nth-child(7n) .story-content { padding: 16px; }
+  .news-grid .story-content h3,
+  .news-grid .story-card:nth-child(7n) .story-content h3 {
+    font-size: 19px;
+    line-height: 1.35;
+  }
+  .story-meta { flex-wrap: wrap; }
+  .read-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    width: fit-content;
+  }
+  .pagination button { min-height: 44px; }
+
+  /* Explain AI's context without requiring another trip to Discover. */
+  .mobile-ai-context {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    gap: 5px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .mobile-ai-context span {
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .11em;
+    color: var(--primary);
+  }
+  .mobile-ai-context strong { font-size: 16px; color: var(--text); }
+  .mobile-ai-context p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .hero-ai .ai-panel {
+    padding: 16px;
+  }
+  .hero-ai .ai-feature { padding: 14px; }
+  .hero-ai .ai-feature strong { font-size: 13px; }
+  .hero-ai .ai-feature p { font-size: 12px; line-height: 1.5; }
+  .hero-ai .ai-intro { font-size: 12px; line-height: 1.55; }
+  .hero-ai .ai-action button,
+  .hero-ai .ai-question input {
+    min-height: 44px;
+    font-size: 13px;
+    touch-action: manipulation;
+  }
+  .hero-ai .ai-question input { min-width: 0; font-size: 16px; }
+  .ai-inline-sources a,
+  .ai-citation-strip a { min-height: 44px; }
+
+  /* Stop anchored content from hiding behind the sticky header. */
+  #stories,
+  #ai-workspace { scroll-margin-top: 80px; }
+}
+@media (max-width: 370px) {
+  .mobile-bottom-nav { left: 8px; right: 8px; padding: 5px; }
+  .mobile-bottom-nav button { font-size: 10px; }
+  .hero h1 { font-size: 36px; }
+  .hero { padding-left: 14px; padding-right: 14px; }
+  .content { padding-left: 14px; padding-right: 14px; }
+}

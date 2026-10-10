@@ -10,6 +10,7 @@ import "./premium-ai.css";
 import "./premium-ai-polish.css";
 import "./premium-search-mobile.css";
 import "./light-mode-clarity.css";
+import "./mobile-usability.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -28,6 +29,7 @@ function labelForTopic(topic) {
 export default function App() {
   const [theme, setTheme] = useState(getSavedTheme);
   const [mobileView, setMobileView] = useState("discover");
+  const [focusMobileSearch, setFocusMobileSearch] = useState(false);
   const [search, setSearch] = useState({ keyword: DEFAULT_QUERY, pageSize: DEFAULT_PAGE_SIZE });
   const [data, setData] = useState({ articles: [], page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -76,12 +78,22 @@ export default function App() {
     [data.articles]
   );
 
-  const mobileViewNote = useMemo(
-    () => mobileView === "discover"
-      ? "Search, filter, and browse the latest stories in one focused feed."
-      : "Generate a brief, ask grounded questions, and compare coverage from the current feed.",
-    [mobileView]
-  );
+  useEffect(() => {
+    if (focusMobileSearch && mobileView === "discover") {
+      document.getElementById("news-search")?.focus();
+      setFocusMobileSearch(false);
+    }
+  }, [focusMobileSearch, mobileView]);
+
+  const switchMobileView = (nextView) => {
+    setMobileView(nextView);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const openMobileSearch = () => {
+    setMobileView("discover");
+    setFocusMobileSearch(true);
+  };
 
   const handleSearch = (keyword, pageSize) => {
     setMobileView("discover");
@@ -115,20 +127,6 @@ export default function App() {
     </header>
 
     <main>
-      <section className="mobile-view-switcher" aria-label="Mobile workspace switcher">
-        <div className="mobile-view-tabs" role="tablist" aria-label="Choose a mobile view">
-          <button type="button" role="tab" aria-selected={mobileView === "discover"} className={`mobile-view-tab ${mobileView === "discover" ? "active" : ""}`} onClick={() => setMobileView("discover")}>
-            <span>Discover</span>
-            <small>Search + news</small>
-          </button>
-          <button type="button" role="tab" aria-selected={mobileView === "ai"} className={`mobile-view-tab ${mobileView === "ai" ? "active" : ""}`} onClick={() => setMobileView("ai")}>
-            <span>AI workspace</span>
-            <small>Brief + Q&amp;A</small>
-          </button>
-        </div>
-        <p className="mobile-view-note">{mobileViewNote}</p>
-      </section>
-
       <section className="hero premium-hero">
         <div className="hero-ambient" aria-hidden="true">
           <span className="ambient-orb orb-one" />
@@ -164,6 +162,11 @@ export default function App() {
         </div>
 
         <div className="hero-ai premium-ai-stage">
+          <div className="mobile-ai-context">
+            <span>AI RESEARCH WORKSPACE</span>
+            <strong>{data.articles?.length || 0} stories in context</strong>
+            <p>{data.articles?.length ? "Create a briefing or ask questions about the stories in your current feed." : "Search for news in Discover first, then return here to explore it with AI."}</p>
+          </div>
           <div className="ai-stage-halo" aria-hidden="true" />
           <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
           <AiWorkspace articles={data.articles || []} />
@@ -188,5 +191,20 @@ export default function App() {
         </div>
       </section>
     </main>
+
+    <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+      <button type="button" className={mobileView === "discover" ? "is-active" : ""} aria-pressed={mobileView === "discover"} aria-controls="stories" onClick={() => switchMobileView("discover")}>
+        <span className="mobile-nav-icon" aria-hidden="true">▤</span>
+        <span>Discover</span>
+      </button>
+      <button type="button" className="mobile-nav-search" aria-label="Jump to news search" onClick={openMobileSearch}>
+        <span className="mobile-nav-icon" aria-hidden="true">⌕</span>
+        <span>Search</span>
+      </button>
+      <button type="button" className={mobileView === "ai" ? "is-active" : ""} aria-pressed={mobileView === "ai"} aria-controls="ai-workspace" onClick={() => switchMobileView("ai")}>
+        <span className="mobile-nav-icon" aria-hidden="true">✦</span>
+        <span>AI workspace</span>
+      </button>
+    </nav>
   </div>;
 }
