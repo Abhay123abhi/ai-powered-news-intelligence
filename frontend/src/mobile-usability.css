@@ -1,6 +1,6 @@
 /*
- * Responsive experience layer. All layout overrides below apply to
- * phones and tablets only; desktop and original animations stay untouched.
+ * Mobile and tablet presentation only.
+ * Existing desktop layout, colors, animations and API behavior are unchanged.
  */
 .mobile-bottom-nav,
 .mobile-ai-context,
@@ -9,12 +9,12 @@
   display: none;
 }
 
+/* Shared handheld layout: phone and smaller portrait tablets. */
 @media (max-width: 900px) {
   .app-shell {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Focused Discover / AI views on handhelds and smaller tablets. */
   .nav-links,
   .mobile-view-switcher,
   .app-shell.mobile-view-discover .hero-ai,
@@ -22,289 +22,397 @@
   .app-shell.mobile-view-ai .content {
     display: none;
   }
+
   .site-header .topbar {
     min-height: 64px;
   }
+
   .site-header .theme-toggle {
-    min-width: 44px;
-    min-height: 44px;
     display: inline-flex;
     justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     touch-action: manipulation;
   }
+
   .app-shell .hero {
     grid-template-columns: minmax(0, 1fr);
     min-width: 0;
     min-height: 0;
   }
+
   .hero-copy-block,
   .hero-ai {
     width: 100%;
     min-width: 0;
   }
 
-  /* Purposeful, compact bottom dock instead of three oversized cards. */
+  /* Flat bottom navigation, with a single underline for the active view. */
   .mobile-bottom-nav {
     position: fixed;
     z-index: 70;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    left: 50%;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px;
-    width: min(calc(100% - 24px), 500px);
-    padding: 5px;
-    border: 1px solid var(--line);
-    border-radius: 20px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+    padding: 4px max(16px, env(safe-area-inset-right, 0px))
+      calc(4px + env(safe-area-inset-bottom, 0px))
+      max(16px, env(safe-area-inset-left, 0px));
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
     background: var(--surface);
-    box-shadow: 0 12px 34px rgba(16, 20, 40, .18);
-    transform: translateX(-50%);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
+    box-shadow: 0 -8px 24px rgba(16, 20, 42, .08);
   }
+
   .mobile-bottom-nav button {
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 9px;
     min-width: 0;
-    min-height: 56px;
-    padding: 7px 4px;
-    border: 1px solid transparent;
-    border-radius: 15px;
-    background: transparent;
+    min-height: 52px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 0;
     color: var(--muted);
+    background: transparent;
     font: inherit;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    line-height: 1.1;
     cursor: pointer;
     touch-action: manipulation;
   }
+
   .mobile-bottom-nav .mobile-nav-icon {
     display: block;
+    width: 19px;
+    height: 19px;
     flex: 0 0 auto;
-    width: 20px;
-    height: 20px;
-  }
-  .mobile-bottom-nav button.is-active {
-    color: var(--primary);
-    background: var(--primary-soft);
-  }
-  .mobile-bottom-nav .mobile-nav-search {
-    color: var(--text);
-  }
-  .mobile-bottom-nav button:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: -2px;
-  }
-  :root[data-theme="dark"] .mobile-bottom-nav {
-    border-color: rgba(147, 142, 255, .25);
-    background: rgba(13, 19, 34, .96);
-    box-shadow: 0 14px 36px rgba(0, 0, 0, .42);
-  }
-  :root:not([data-theme="dark"]) .mobile-bottom-nav {
-    border-color: #e3e6f1;
-    background: rgba(255, 255, 255, .97);
-    box-shadow: 0 13px 32px rgba(36, 45, 84, .13);
   }
 
-  /* A clear exit from the AI view, even when news or AI is unavailable. */
+  .mobile-bottom-nav button.is-active {
+    color: var(--primary);
+    background: transparent;
+  }
+
+  .mobile-bottom-nav button.is-active::after {
+    position: absolute;
+    top: -5px;
+    right: 29%;
+    left: 29%;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--ai-violet), var(--ai-cyan));
+    content: "";
+  }
+
+  .mobile-bottom-nav button:focus-visible,
+  .mobile-context-action:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -3px;
+  }
+
+  :root[data-theme="dark"] .mobile-bottom-nav {
+    border-top-color: rgba(147, 142, 255, .18);
+    background: #101725;
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, .18);
+  }
+
+  :root:not([data-theme="dark"]) .mobile-bottom-nav {
+    border-top-color: #e0e5ef;
+    background: #fff;
+  }
+
+  /* The context belongs to the AI panel; it is a status strip, not another card. */
   .mobile-ai-context {
     position: relative;
     z-index: 2;
     display: grid;
-    gap: 6px;
-    padding: 15px 17px;
-    margin-bottom: 16px;
-    border: 1px solid var(--line);
-    border-radius: 17px;
-    background: var(--surface);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 12px;
+    padding: 4px 2px 14px;
+    margin-bottom: 17px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
+
   .mobile-ai-context > span {
+    grid-column: 1 / -1;
     color: var(--primary);
     font-size: 10px;
     font-weight: 800;
     letter-spacing: .08em;
   }
+
   .mobile-ai-context strong {
+    grid-column: 1;
     color: var(--text);
-    font-size: 17px;
-    line-height: 1.25;
+    font-size: 16px;
+    line-height: 1.3;
   }
+
   .mobile-ai-context p {
+    grid-column: 1 / -1;
+    grid-row: 3;
     margin: 0;
     color: var(--muted);
     font-size: 12px;
     line-height: 1.5;
   }
+
   .mobile-context-action {
     display: inline-flex;
+    grid-column: 2;
+    grid-row: 2;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    justify-self: start;
+    align-self: center;
     min-height: 40px;
-    margin-top: 6px;
-    padding: 8px 13px;
-    border: 1px solid color-mix(in srgb, var(--primary) 36%, var(--line));
+    padding: 9px 12px;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--line));
     border-radius: 11px;
     color: var(--primary);
     background: var(--primary-soft);
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 750;
+    white-space: nowrap;
     touch-action: manipulation;
   }
-  .mobile-context-action:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+
+  /* Fill the screen behind the panel instead of ending the gradient early. */
+  .app-shell.mobile-view-ai {
+    padding-bottom: 0;
   }
-  .app-shell.mobile-view-ai .hero {
-    padding-top: 18px;
-    padding-bottom: 22px;
+
+  .app-shell.mobile-view-ai .hero.premium-hero {
+    min-height: calc(100vh - 64px);
+    min-height: calc(100svh - 64px);
+    padding-top: 21px;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    align-content: start;
   }
-  .hero-ai .ai-panel {
+
+  .app-shell.mobile-view-ai .premium-ai-stage {
+    isolation: isolate;
+    width: 100%;
+  }
+
+  .app-shell.mobile-view-ai .ai-stage-halo {
+    display: block;
+    inset: -3% -5% -8%;
+    opacity: .62;
+    pointer-events: none;
+    animation: haloBreathe 6.5s ease-in-out infinite;
+  }
+
+  /* Desktop-inspired panel: retain ambient glow and animated gradient edge. */
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel {
     position: relative;
     display: block;
     min-height: 0;
-    padding: 18px;
-    border-radius: 20px;
+    padding: 17px;
+    border: 1px solid color-mix(in srgb, var(--ai-violet) 30%, var(--line));
+    border-radius: 19px;
+    box-shadow: var(--shadow-strong), 0 0 28px color-mix(in srgb, var(--ai-violet) 8%, transparent);
   }
+
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before {
+    opacity: .9;
+    animation: workspaceTopEdge 5s ease-in-out infinite alternate;
+  }
+
+  /* The web-style "LIVE" badge would misleadingly overlap the offline state. */
+  .app-shell.mobile-view-ai .ai-stage-label {
+    display: none;
+  }
+
   .hero-ai .ai-panel h3 {
-    margin-top: 11px;
-    font-size: clamp(25px, 4vw, 31px);
-    line-height: 1.1;
+    margin: 10px 0 8px;
+    font-size: clamp(26px, 4vw, 31px);
+    line-height: 1.17;
   }
+
   .hero-ai .ai-overview {
     padding-bottom: 13px;
   }
+
   .hero-ai .ai-intro {
     font-size: 12px;
     line-height: 1.55;
   }
+
   .hero-ai .ai-controls {
-    gap: 10px;
+    display: grid;
+    gap: 9px;
     margin-top: 13px;
   }
+
   .hero-ai .ai-feature {
     min-width: 0;
     padding: 13px;
   }
-  .hero-ai .ai-feature strong { font-size: 12px; }
+
+  .hero-ai .ai-feature strong {
+    font-size: 13px;
+  }
+
   .hero-ai .ai-feature p {
     min-height: 0;
     font-size: 11px;
-    line-height: 1.45;
+    line-height: 1.5;
   }
+
   .hero-ai .ai-action button {
     min-height: 44px;
     padding-inline: 12px;
     font-size: 12px;
     touch-action: manipulation;
   }
+
   .hero-ai .ai-question input {
     min-width: 0;
     min-height: 44px;
     font-size: 16px;
   }
 
-  /* When offline, capabilities are labels, not large disabled action cards. */
+  /* All three offline features remain readable without horizontal clipping. */
   .hero-ai .ai-controls.disabled-controls {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    margin-top: 13px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    overflow: visible;
   }
+
   .hero-ai .disabled-controls .ai-feature {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 62px;
-    padding: 10px 6px;
-    text-align: center;
-    background: var(--surface-soft);
-    box-shadow: none;
+    display: block;
+    min-height: 0;
+    padding: 13px 15px;
+    border: 1px solid color-mix(in srgb, var(--ai-violet) 20%, var(--line));
+    border-radius: 13px;
+    text-align: left;
+    background:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ai-violet) 11%, transparent), transparent 13rem),
+      var(--surface-soft);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--ai-violet) 5%, transparent);
     transform: none;
     animation: none;
   }
-  .hero-ai .disabled-controls .ai-feature strong {
-    display: block;
-    font-size: 11px;
-    line-height: 1.35;
-  }
+
   .hero-ai .disabled-controls .ai-feature p {
-    display: none;
+    display: block;
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
   }
+
   .hero-ai .ai-foundation {
-    margin-top: 13px;
     padding: 12px;
+    margin-top: 14px;
     text-align: left;
   }
+
   .hero-ai .ai-foundation p {
     font-size: 11px;
     line-height: 1.5;
   }
-  .hero-ai .ai-foundation strong { font-size: 12px; }
+
   .ai-inline-sources a {
     display: inline-flex;
     align-items: center;
     min-height: 40px;
   }
 
-  /* Report a provider error accurately rather than calling it no stories. */
   .results-header h2.mobile-results-error > span:first-child {
     display: none;
   }
+
   .results-header h2 .mobile-error-heading {
     display: inline;
   }
 
   #stories,
   #ai-workspace {
-    scroll-margin-top: 76px;
+    scroll-margin-top: 78px;
   }
 }
 
-/* Small tablets in portrait: focused views, comfortable content width. */
+/* Portrait tablets: existing layout, comfortable reading column. */
 @media (min-width: 721px) and (max-width: 900px) {
   .app-shell .hero {
-    padding: 30px max(28px, calc((100vw - 760px) / 2)) 38px;
+    padding: 30px max(28px, calc((100vw - 760px) / 2)) 36px;
   }
+
   .hero-copy-block,
-  .hero-ai { max-width: 760px; margin-inline: auto; }
-  .hero-ai .ai-controls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .hero-ai .ai-question { grid-template-columns: minmax(0, 1fr) auto; }
-  .content { padding-bottom: 40px; }
+  .hero-ai {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .hero-ai .ai-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .hero-ai .ai-controls.disabled-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .content {
+    padding-bottom: 40px;
+  }
 }
 
-/* Larger tablets use the existing web navigation with tighter spacing. */
+/* Smaller laptops and landscape tablets retain web navigation. */
 @media (min-width: 901px) and (max-width: 1080px) {
   .hero {
     gap: 26px;
     padding-top: 34px;
     padding-bottom: 36px;
   }
-  .hero-copy-block { max-width: 820px; }
-  .hero-ai .ai-panel { max-width: 940px; margin-inline: auto; }
+
+  .hero-copy-block {
+    max-width: 820px;
+  }
+
+  .hero-ai .ai-panel {
+    max-width: 940px;
+    margin-inline: auto;
+  }
 }
 
-/* Phone-sized layouts; no changes leak to desktop. */
+/* Phone layout: unclipped search, compact feed, single-column AI tools. */
 @media (max-width: 720px) {
   .app-shell .hero {
     gap: 18px;
     padding: 22px 18px 24px;
   }
-  .site-header .topbar { padding-inline: 18px; }
+
+  .site-header .topbar {
+    padding-inline: 18px;
+  }
+
   .hero h1 {
     margin: 11px 0 12px;
     font-size: clamp(36px, 10vw, 49px);
     line-height: 1.07;
     letter-spacing: -.055em;
   }
+
   .hero-copy-block > p:not(.mobile-hero-subtitle) {
     display: none;
   }
+
   .hero-copy-block > .mobile-hero-subtitle {
     display: block;
     max-width: 36ch;
@@ -313,15 +421,18 @@
     font-size: 13px;
     line-height: 1.55;
   }
+
   .live-label {
     gap: 7px;
     font-size: 9px;
     letter-spacing: .08em;
   }
-  .hero-value-row,
-  .source-strip { display: none; }
 
-  /* Hard sizing rules prevent the Search button overflowing at 320–430px. */
+  .hero-value-row,
+  .source-strip {
+    display: none;
+  }
+
   .hero .search-form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -332,6 +443,7 @@
     padding: 8px;
     border-radius: 19px;
   }
+
   .hero .search-form .search-field {
     grid-column: 1 / -1;
     min-width: 0;
@@ -339,30 +451,31 @@
     min-height: 46px;
     border-bottom: 1px solid var(--line);
   }
+
   .hero .search-form input {
     width: 100%;
     min-width: 0;
     min-height: 44px;
     font-size: 16px;
   }
+
   .hero .search-form .page-size {
     grid-column: 1;
     min-width: 0;
     width: 100%;
     margin: 0;
-    color: var(--muted);
   }
+
   .hero .search-form .page-size select {
     display: block;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
     min-height: 46px;
     padding: 10px 27px 10px 10px;
-    overflow: hidden;
     font-size: 12px;
     text-overflow: ellipsis;
   }
+
   .hero .search-form > button {
     grid-column: 2;
     width: 100%;
@@ -374,28 +487,35 @@
     white-space: nowrap;
     touch-action: manipulation;
   }
-  .search-submit-icon { width: 22px; height: 22px; }
 
-  /* Visible topic choices scroll horizontally, with reachable tap areas. */
+  .search-submit-icon {
+    width: 22px;
+    height: 22px;
+  }
+
   .quick-topics {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
     gap: 8px;
     max-width: 100%;
-    margin-top: 13px;
     padding: 2px 0 7px;
+    margin-top: 13px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  .quick-topics::-webkit-scrollbar { display: none; }
+
+  .quick-topics::-webkit-scrollbar {
+    display: none;
+  }
+
   .quick-topics > span {
     flex: 0 0 auto;
     width: auto;
-    margin-right: 0;
   }
+
   .quick-topics button {
     flex: 0 0 auto;
     min-height: 44px;
@@ -407,197 +527,121 @@
   .content {
     padding: 22px 18px 36px;
   }
-  .results-header { gap: 8px; margin-bottom: 14px; }
+
+  .results-header {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
   .results-header h2 {
     font-size: clamp(26px, 7vw, 33px);
     line-height: 1.15;
   }
-  .news-list { gap: 13px; }
-  .news-grid { gap: 12px; }
-  .lead-layout { margin-bottom: 12px; }
+
+  .news-list,
+  .news-grid {
+    gap: 12px;
+  }
+
+  .lead-layout {
+    margin-bottom: 12px;
+  }
+
   .featured-story .image-wrap,
   .lead-layout .featured-story .image-wrap {
     height: 205px;
     min-height: 205px;
   }
+
   .featured-story .story-content,
   .lead-layout .featured-story .story-content {
     padding: 18px;
   }
+
   .featured-story .story-content h3,
   .lead-layout .featured-story .story-content h3 {
     font-size: clamp(23px, 6.1vw, 29px);
     line-height: 1.18;
   }
+
   .news-grid .image-wrap,
   .news-grid .story-card:nth-child(7n) .image-wrap {
     height: 175px;
     min-height: 175px;
   }
+
   .news-grid .story-content,
   .news-grid .story-card:nth-child(7n) .story-content {
     padding: 16px;
   }
+
   .news-grid .story-content h3,
   .news-grid .story-card:nth-child(7n) .story-content h3 {
     font-size: 19px;
     line-height: 1.33;
   }
+
   .state-card {
     min-height: 230px;
     padding: 24px 18px;
   }
-  .state-card h3 { font-size: 25px; }
-  .state-card p { margin-bottom: 12px; }
+
+  .state-card h3 {
+    font-size: 25px;
+  }
+
+  .state-card p {
+    margin-bottom: 12px;
+  }
+
   .state-card button,
   .pagination button,
-  .read-link { min-height: 44px; }
-  .pagination { gap: 8px; }
-  .pagination button { padding: 10px 12px; }
+  .read-link {
+    min-height: 44px;
+  }
 
-  .app-shell.mobile-view-ai .hero {
+  .pagination {
+    gap: 8px;
+  }
+
+  .app-shell.mobile-view-ai .hero.premium-hero {
     padding-top: 20px;
-    padding-bottom: 22px;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   }
-  .mobile-ai-context { margin-bottom: 13px; }
-  .hero-ai .ai-panel { padding: 16px; }
-  .hero-ai .ai-controls { grid-template-columns: minmax(0, 1fr); }
-  .hero-ai .ai-controls.disabled-controls {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  .app-shell.mobile-view-ai .hero-ai .ai-controls {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .hero-ai .ai-action button { font-size: 12px; }
+
+  .app-shell.mobile-view-ai .hero-ai .ai-panel {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 370px) {
   .app-shell .hero,
   .content {
-    padding-left: 14px;
     padding-right: 14px;
+    padding-left: 14px;
   }
-  .hero h1 { font-size: 35px; }
-  .mobile-bottom-nav { width: calc(100% - 16px); }
-  .mobile-bottom-nav button { font-size: 10px; }
-  .hero .search-form > button { font-size: 11px; }
-  .hero .search-form > button .search-submit-icon { display: none; }
-  .hero-ai .disabled-controls .ai-feature strong { font-size: 10px; }
-}
 
-/* Two clear destinations: search already lives in Discover. */
-@media (max-width: 900px) {
-  .mobile-bottom-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 420px;
+  .hero h1 {
+    font-size: 35px;
   }
-  .mobile-bottom-nav button {
-    flex-direction: row;
-    gap: 9px;
-    font-size: 12px;
-  }
-  .mobile-bottom-nav .mobile-nav-icon { width: 19px; height: 19px; }
-  .app-shell.mobile-view-ai .premium-ai-stage {
-    isolation: isolate;
-    width: 100%;
-  }
-  .app-shell.mobile-view-ai .ai-stage-halo {
-    display: block;
-    inset: -3% -6% -10%;
-    opacity: .7;
-    animation: haloBreathe 6.5s ease-in-out infinite;
-    pointer-events: none;
-  }
-  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel {
-    border-color: color-mix(in srgb, var(--ai-violet) 32%, var(--line));
-    box-shadow: var(--shadow-strong), 0 0 32px color-mix(in srgb, var(--ai-violet) 11%, transparent);
-  }
-  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before {
-    opacity: .94;
-    animation: workspaceTopEdge 5s ease-in-out infinite alternate;
-  }
-  .app-shell.mobile-view-ai .ai-stage-label {
-    display: inline-flex;
-    top: -13px;
-    right: 10px;
-    padding: 6px 9px;
-    font-size: 8px;
-    letter-spacing: .07em;
-  }
-  .app-shell.mobile-view-ai .ai-stage-label span { animation: livePulse 1.8s ease-in-out infinite; }
-  .app-shell.mobile-view-ai .mobile-ai-context {
-    border-color: color-mix(in srgb, var(--ai-violet) 22%, var(--line));
-    background:
-      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ai-violet) 12%, transparent), transparent 12rem),
-      var(--surface);
-  }
-}
 
-/* Animated, swipeable AI features instead of three cramped offline boxes. */
-@media (max-width: 720px) {
-  .app-shell.mobile-view-ai .premium-hero .ambient-orb { opacity: .32; }
-  .app-shell.mobile-view-ai .premium-hero .signal-line {
-    display: block;
-    width: min(55vw, 200px);
-    height: 1px;
-    opacity: .32;
-  }
-  .app-shell.mobile-view-ai .hero-ai .ai-controls.disabled-controls {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    margin-top: 14px;
-    padding: 2px 1px 12px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-  .app-shell.mobile-view-ai .disabled-controls::-webkit-scrollbar { display: none; }
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature {
-    display: flex;
-    flex: 0 0 min(54vw, 192px);
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    min-height: 126px;
-    padding: 16px 13px;
-    border: 1px solid color-mix(in srgb, var(--ai-violet) 24%, var(--line));
-    border-radius: 15px;
-    text-align: left;
-    background:
-      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ai-violet) 16%, transparent), transparent 9rem),
-      var(--surface-soft);
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--ai-violet) 9%, transparent);
-    scroll-snap-align: start;
-    animation: featureFloatOne 6.2s ease-in-out infinite;
-  }
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature:nth-child(2) {
-    animation-name: featureFloatTwo;
-    animation-duration: 6.8s;
-  }
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature:nth-child(3) {
-    animation-name: featureFloatThree;
-    animation-duration: 6.5s;
-  }
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature strong {
-    font-size: 13px;
-    line-height: 1.35;
-  }
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature p {
-    display: block;
-    min-height: 0;
-    margin-top: 8px;
-    color: var(--muted);
+  .hero .search-form > button {
     font-size: 11px;
-    line-height: 1.45;
   }
-  .app-shell.mobile-view-ai .hero-ai .ai-panel h3 { line-height: 1.16; }
+
+  .hero .search-form > button .search-submit-icon {
+    display: none;
+  }
 }
 
+/* Leave the desktop's original animations and accessible reduced-motion rules intact. */
 @media (prefers-reduced-motion: reduce) {
   .app-shell.mobile-view-ai .ai-stage-halo,
-  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before,
-  .app-shell.mobile-view-ai .ai-stage-label span,
-  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature {
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before {
     animation: none !important;
   }
 }
