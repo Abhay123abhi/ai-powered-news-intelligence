@@ -481,3 +481,123 @@
   .hero .search-form > button .search-submit-icon { display: none; }
   .hero-ai .disabled-controls .ai-feature strong { font-size: 10px; }
 }
+
+/* Two clear destinations: search already lives in Discover. */
+@media (max-width: 900px) {
+  .mobile-bottom-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 420px;
+  }
+  .mobile-bottom-nav button {
+    flex-direction: row;
+    gap: 9px;
+    font-size: 12px;
+  }
+  .mobile-bottom-nav .mobile-nav-icon { width: 19px; height: 19px; }
+  .app-shell.mobile-view-ai .premium-ai-stage {
+    isolation: isolate;
+    width: 100%;
+  }
+  .app-shell.mobile-view-ai .ai-stage-halo {
+    display: block;
+    inset: -3% -6% -10%;
+    opacity: .7;
+    animation: haloBreathe 6.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel {
+    border-color: color-mix(in srgb, var(--ai-violet) 32%, var(--line));
+    box-shadow: var(--shadow-strong), 0 0 32px color-mix(in srgb, var(--ai-violet) 11%, transparent);
+  }
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before {
+    opacity: .94;
+    animation: workspaceTopEdge 5s ease-in-out infinite alternate;
+  }
+  .app-shell.mobile-view-ai .ai-stage-label {
+    display: inline-flex;
+    top: -13px;
+    right: 10px;
+    padding: 6px 9px;
+    font-size: 8px;
+    letter-spacing: .07em;
+  }
+  .app-shell.mobile-view-ai .ai-stage-label span { animation: livePulse 1.8s ease-in-out infinite; }
+  .app-shell.mobile-view-ai .mobile-ai-context {
+    border-color: color-mix(in srgb, var(--ai-violet) 22%, var(--line));
+    background:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ai-violet) 12%, transparent), transparent 12rem),
+      var(--surface);
+  }
+}
+
+/* Animated, swipeable AI features instead of three cramped offline boxes. */
+@media (max-width: 720px) {
+  .app-shell.mobile-view-ai .premium-hero .ambient-orb { opacity: .32; }
+  .app-shell.mobile-view-ai .premium-hero .signal-line {
+    display: block;
+    width: min(55vw, 200px);
+    height: 1px;
+    opacity: .32;
+  }
+  .app-shell.mobile-view-ai .hero-ai .ai-controls.disabled-controls {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 2px 1px 12px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .app-shell.mobile-view-ai .disabled-controls::-webkit-scrollbar { display: none; }
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature {
+    display: flex;
+    flex: 0 0 min(54vw, 192px);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 126px;
+    padding: 16px 13px;
+    border: 1px solid color-mix(in srgb, var(--ai-violet) 24%, var(--line));
+    border-radius: 15px;
+    text-align: left;
+    background:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ai-violet) 16%, transparent), transparent 9rem),
+      var(--surface-soft);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--ai-violet) 9%, transparent);
+    scroll-snap-align: start;
+    animation: featureFloatOne 6.2s ease-in-out infinite;
+  }
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature:nth-child(2) {
+    animation-name: featureFloatTwo;
+    animation-duration: 6.8s;
+  }
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature:nth-child(3) {
+    animation-name: featureFloatThree;
+    animation-duration: 6.5s;
+  }
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature strong {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature p {
+    display: block;
+    min-height: 0;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .app-shell.mobile-view-ai .hero-ai .ai-panel h3 { line-height: 1.16; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.mobile-view-ai .ai-stage-halo,
+  .app-shell.mobile-view-ai .premium-ai-stage .ai-panel::before,
+  .app-shell.mobile-view-ai .ai-stage-label span,
+  .app-shell.mobile-view-ai .hero-ai .disabled-controls .ai-feature {
+    animation: none !important;
+  }
+}
