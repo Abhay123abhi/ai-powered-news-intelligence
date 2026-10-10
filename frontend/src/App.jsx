@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import newsApi from "./features/news/api/newsApi";
 import SearchForm from "./features/news/components/SearchForm";
 import NewsList from "./features/news/components/NewsList";
 import AiWorkspace from "./features/ai/components/AiWorkspace";
+import "./styles/tokens.css";
 import "./App.css";
 import "./ai-first.css";
 import "./discover-refresh.css";
@@ -16,7 +17,7 @@ const QUICK_TOPICS = ["latest", "technology", "business", "climate", "science", 
 
 function getSavedTheme() {
   const savedTheme = window.localStorage.getItem("news-theme");
-  if (savedTheme) return savedTheme;
+  if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -32,28 +33,40 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [slowRequest, setSlowRequest] = useState(false);
   const [error, setError] = useState("");
+  const activeNewsRequest = useRef(null);
 
   const loadNews = useCallback(async (keyword, page, pageSize) => {
+    activeNewsRequest.current?.abort();
+    const controller = new AbortController();
+    activeNewsRequest.current = controller;
     setLoading(true);
     setSlowRequest(false);
     setError("");
     try {
-      const response = await newsApi.search(keyword, page, pageSize);
+      const response = await newsApi.search(keyword, page, pageSize, controller.signal);
+      if (controller.signal.aborted) return;
       setData(response);
       setSearch({ keyword, pageSize });
     } catch (requestError) {
+      if (controller.signal.aborted) return;
       setError(
         requestError.response?.data?.detail ||
         requestError.response?.data?.message ||
         "We couldn't load the news right now. Please try again."
       );
     } finally {
-      setLoading(false);
-      setSlowRequest(false);
+      if (activeNewsRequest.current === controller) {
+        activeNewsRequest.current = null;
+        setLoading(false);
+        setSlowRequest(false);
+      }
     }
   }, []);
 
-  useEffect(() => { loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE); }, [loadNews]);
+  useEffect(() => {
+    loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE);
+    return () => activeNewsRequest.current?.abort();
+  }, [loadNews]);
   useEffect(() => {
     if (!loading) return undefined;
     const timer = window.setTimeout(() => setSlowRequest(true), 10000);
@@ -62,6 +75,7 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem("news-theme", theme);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#070d1f" : "#f4f7fc");
   }, [theme]);
 
   const resultSummary = useMemo(() => {

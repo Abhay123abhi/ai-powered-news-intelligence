@@ -1,37 +1,5 @@
 /* AI-first presentation layer. Data flow and API behavior remain unchanged. */
 
-:root {
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --surface-soft: #f2f4f8;
-  --text: #171a24;
-  --muted: #697184;
-  --line: #e1e5ed;
-  --primary: #5d57e7;
-  --primary-soft: #efeeff;
-  --accent: #16a978;
-  --hero: #f8f9fc;
-  --hero-2: #eef1f7;
-  --shadow: 0 12px 34px rgba(36, 42, 60, .07);
-  --shadow-strong: 0 20px 58px rgba(35, 40, 58, .11);
-}
-
-:root[data-theme="dark"] {
-  --bg: #0b0f16;
-  --surface: #121823;
-  --surface-soft: #0f141e;
-  --text: #f0f2f6;
-  --muted: #9ba5b6;
-  --line: #283140;
-  --primary: #9f98ff;
-  --primary-soft: #252346;
-  --accent: #40d0a0;
-  --hero: #0f141d;
-  --hero-2: #151c28;
-  --shadow: 0 14px 38px rgba(0, 0, 0, .24);
-  --shadow-strong: 0 24px 70px rgba(0, 0, 0, .34);
-}
-
 body {
   background: var(--bg);
 }
@@ -106,7 +74,7 @@ body {
 
 .brand-mark {
   border-color: color-mix(in srgb, var(--primary) 24%, transparent);
-  background: linear-gradient(145deg, #716af0, #5048d6);
+  background: linear-gradient(145deg, var(--ai-indigo), var(--ai-cyan));
   box-shadow: 0 8px 22px rgba(91, 85, 232, .22);
 }
 
@@ -184,7 +152,7 @@ body {
 }
 
 .search-form > button {
-  background: linear-gradient(135deg, #675ff2, #5148d5);
+  background: linear-gradient(135deg, var(--ai-indigo), var(--ai-cyan));
   box-shadow: 0 8px 20px rgba(91, 85, 232, .20);
 }
 

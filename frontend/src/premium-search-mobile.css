@@ -239,7 +239,7 @@
 }
 
 :root[data-theme="dark"] .search-form > button {
-  background: linear-gradient(135deg, #6f63ff, #4e46dc);
+  background: linear-gradient(135deg, var(--ai-indigo), var(--ai-cyan));
   box-shadow: 0 16px 34px rgba(84, 76, 212, .34), inset 0 1px 0 rgba(255,255,255,.14);
 }
 
@@ -286,7 +286,7 @@
 }
 
 :root:not([data-theme="dark"]) .search-form > button {
-  background: linear-gradient(135deg, #6f63ff, #5a52e3);
+  background: linear-gradient(135deg, var(--ai-indigo), var(--ai-cyan));
   box-shadow: 0 14px 28px rgba(92, 80, 202, .20), inset 0 1px 0 rgba(255,255,255,.16);
 }
 
