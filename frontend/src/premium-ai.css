@@ -1,5 +1,13 @@
 /* Premium AI visual layer: lightweight CSS depth and motion, no heavy 3D runtime. */
 
+:root {
+  --ai-violet: #7657ff;
+  --ai-indigo: #4e46dc;
+  --ai-cyan: #2bc8d9;
+  --ai-mint: #2fd49b;
+  --ai-ink: #17152b;
+}
+
 .premium-hero {
   position: relative;
   isolation: isolate;
