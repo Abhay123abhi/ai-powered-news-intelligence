@@ -140,6 +140,7 @@ export default function App() {
           <div className="live-label"><span aria-hidden="true" /> AI-POWERED NEWS INTELLIGENCE</div>
           <h1>Search the news.<br /><em>Think beyond it.</em></h1>
           <p>Trusted reporting becomes an AI research workspace. Search The Guardian and The New York Times, then generate a briefing, ask grounded questions, and compare how publishers frame the same story.</p>
+          <p className="mobile-hero-subtitle">Trusted news, smarter research, and clear insights in one place.</p>
 
           <div className="hero-value-row" aria-label="AI workspace capabilities">
             <span><i /> Source grounded</span>
@@ -166,6 +167,9 @@ export default function App() {
             <span>AI RESEARCH WORKSPACE</span>
             <strong>{data.articles?.length || 0} stories in context</strong>
             <p>{data.articles?.length ? "Create a briefing or ask questions about the stories in your current feed." : "Search for news in Discover first, then return here to explore it with AI."}</p>
+            <button type="button" className="mobile-context-action" onClick={() => switchMobileView("discover")}>
+              Browse news <span aria-hidden="true">→</span>
+            </button>
           </div>
           <div className="ai-stage-halo" aria-hidden="true" />
           <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
@@ -175,7 +179,13 @@ export default function App() {
 
       <section className="content" id="stories" aria-live="polite">
         <div className="results-header">
-          <div><p className="section-label">DISCOVER</p><h2>{resultSummary}</h2></div>
+          <div>
+            <p className="section-label">DISCOVER</p>
+            <h2 className={error ? "mobile-results-error" : ""}>
+              <span>{resultSummary}</span>
+              {error && <span className="mobile-error-heading">News unavailable</span>}
+            </h2>
+          </div>
           {!loading && !error && <div className="result-metrics"><span><strong>{data.articles?.length || 0}</strong> shown</span><span><strong>{sourceCount}</strong> sources</span>{data.timeTakenMs != null && <span><strong>{data.timeTakenMs < 1000 ? `${data.timeTakenMs}ms` : `${(data.timeTakenMs / 1000).toFixed(1)}s`}</strong> response</span>}</div>}
         </div>
 
@@ -194,15 +204,24 @@ export default function App() {
 
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
       <button type="button" className={mobileView === "discover" ? "is-active" : ""} aria-pressed={mobileView === "discover"} aria-controls="stories" onClick={() => switchMobileView("discover")}>
-        <span className="mobile-nav-icon" aria-hidden="true">▤</span>
+        <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+          <path d="M8 8h8M8 12h8M8 16h5" />
+        </svg>
         <span>Discover</span>
       </button>
       <button type="button" className="mobile-nav-search" aria-label="Jump to news search" onClick={openMobileSearch}>
-        <span className="mobile-nav-icon" aria-hidden="true">⌕</span>
+        <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="10.8" cy="10.8" r="6.2" />
+          <path d="m15.4 15.4 4.6 4.6" />
+        </svg>
         <span>Search</span>
       </button>
       <button type="button" className={mobileView === "ai" ? "is-active" : ""} aria-pressed={mobileView === "ai"} aria-controls="ai-workspace" onClick={() => switchMobileView("ai")}>
-        <span className="mobile-nav-icon" aria-hidden="true">✦</span>
+        <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m12 2 1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2Z" />
+          <path d="m19 17 .6 1.4L21 19l-1.4.6L19 21l-.6-1.4L17 19l1.4-.6L19 17Z" />
+        </svg>
         <span>AI workspace</span>
       </button>
     </nav>

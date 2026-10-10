@@ -53,6 +53,18 @@ describe("mobile navigation", () => {
     expect(buttons[0].getAttribute("aria-pressed")).toBe("true");
   });
 
+  it("offers a way back to Discover from the AI panel", async () => {
+    const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
+    await act(async () => { buttons[2].click(); });
+
+    const browse = container.querySelector(".mobile-context-action");
+    expect(browse).not.toBeNull();
+    expect(browse.textContent).toContain("Browse news");
+
+    await act(async () => { browse.click(); });
+    expect(container.querySelector(".app-shell").className).toContain("mobile-view-discover");
+  });
+
   it("opens and focuses search from the AI workspace", async () => {
     const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
     await act(async () => { buttons[2].click(); });
