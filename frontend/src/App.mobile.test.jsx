@@ -40,12 +40,12 @@ describe("mobile navigation", () => {
 
   it("switches between the news feed and AI without changing the selected theme", async () => {
     const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
-    expect(buttons).toHaveLength(3);
+    expect(buttons).toHaveLength(2);
     expect(buttons[0].getAttribute("aria-pressed")).toBe("true");
 
-    await act(async () => { buttons[2].click(); });
+    await act(async () => { buttons[1].click(); });
     expect(container.querySelector(".app-shell").className).toContain("mobile-view-ai");
-    expect(buttons[2].getAttribute("aria-pressed")).toBe("true");
+    expect(buttons[1].getAttribute("aria-pressed")).toBe("true");
     expect(document.documentElement.dataset.theme).toBe("dark");
 
     await act(async () => { buttons[0].click(); });
@@ -55,7 +55,7 @@ describe("mobile navigation", () => {
 
   it("offers a way back to Discover from the AI panel", async () => {
     const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
-    await act(async () => { buttons[2].click(); });
+    await act(async () => { buttons[1].click(); });
 
     const browse = container.querySelector(".mobile-context-action");
     expect(browse).not.toBeNull();
@@ -65,12 +65,10 @@ describe("mobile navigation", () => {
     expect(container.querySelector(".app-shell").className).toContain("mobile-view-discover");
   });
 
-  it("opens and focuses search from the AI workspace", async () => {
+  it("keeps search in Discover and not in the bottom navigation", () => {
     const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
-    await act(async () => { buttons[2].click(); });
-    await act(async () => { buttons[1].click(); });
-
-    expect(container.querySelector(".app-shell").className).toContain("mobile-view-discover");
-    expect(document.activeElement?.id).toBe("news-search");
+    expect(buttons.map((button) => button.textContent.trim())).toEqual(["Discover", "AI workspace"]);
+    expect(container.querySelector("#news-search")).not.toBeNull();
+    expect(container.querySelector('.search-form button[type="submit"]')).not.toBeNull();
   });
 });

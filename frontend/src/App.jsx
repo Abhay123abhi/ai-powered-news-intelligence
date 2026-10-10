@@ -11,6 +11,7 @@ import "./premium-ai-polish.css";
 import "./premium-search-mobile.css";
 import "./light-mode-clarity.css";
 import "./mobile-usability.css";
+import "./landing-fold.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -29,7 +30,6 @@ function labelForTopic(topic) {
 export default function App() {
   const [theme, setTheme] = useState(getSavedTheme);
   const [mobileView, setMobileView] = useState("discover");
-  const [focusMobileSearch, setFocusMobileSearch] = useState(false);
   const [search, setSearch] = useState({ keyword: DEFAULT_QUERY, pageSize: DEFAULT_PAGE_SIZE });
   const [data, setData] = useState({ articles: [], page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -78,21 +78,9 @@ export default function App() {
     [data.articles]
   );
 
-  useEffect(() => {
-    if (focusMobileSearch && mobileView === "discover") {
-      document.getElementById("news-search")?.focus();
-      setFocusMobileSearch(false);
-    }
-  }, [focusMobileSearch, mobileView]);
-
   const switchMobileView = (nextView) => {
     setMobileView(nextView);
     window.scrollTo({ top: 0, behavior: "auto" });
-  };
-
-  const openMobileSearch = () => {
-    setMobileView("discover");
-    setFocusMobileSearch(true);
   };
 
   const handleSearch = (keyword, pageSize) => {
@@ -209,13 +197,6 @@ export default function App() {
           <path d="M8 8h8M8 12h8M8 16h5" />
         </svg>
         <span>Discover</span>
-      </button>
-      <button type="button" className="mobile-nav-search" aria-label="Jump to news search" onClick={openMobileSearch}>
-        <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="10.8" cy="10.8" r="6.2" />
-          <path d="m15.4 15.4 4.6 4.6" />
-        </svg>
-        <span>Search</span>
       </button>
       <button type="button" className={mobileView === "ai" ? "is-active" : ""} aria-pressed={mobileView === "ai"} aria-controls="ai-workspace" onClick={() => switchMobileView("ai")}>
         <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
