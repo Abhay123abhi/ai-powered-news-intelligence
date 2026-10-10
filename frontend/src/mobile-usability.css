@@ -10,8 +10,8 @@
     padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Replace the top tabs with a thumb-reachable persistent navigation dock. */
-  .mobile-view-switcher { display: none; }
+  /* Thumb-reachable persistent navigation dock. */
+  
   .mobile-bottom-nav {
     position: fixed;
     z-index: 70;

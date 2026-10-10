@@ -117,13 +117,3 @@
   border-color: #dfe4ef;
   background-color: #ffffff;
 }
-
-@media (max-width: 720px) {
-  :root:not([data-theme="dark"]) .mobile-view-switcher {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(255, 255, 255, .86));
-  }
-  :root:not([data-theme="dark"]) .mobile-view-tabs {
-    border-color: #e3e7f1;
-    background: #ffffff;
-  }
-}
