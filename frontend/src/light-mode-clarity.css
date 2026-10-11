@@ -117,3 +117,39 @@
   border-color: #dfe4ef;
   background-color: #ffffff;
 }
+
+/* Readability: keep the white editorial look, sharpen supporting content. */
+:root:not([data-theme="dark"]) {
+  --muted: #48566f;
+  --line: #d6deeb;
+}
+
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-feature {
+  border-color: #d5ddec;
+  background: linear-gradient(150deg, #ffffff, #f7f9ff);
+}
+
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-feature p {
+  color: #48566d;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+:root:not([data-theme="dark"]) .premium-ai-stage .ai-intro {
+  color: #46546b;
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+:root:not([data-theme="dark"]) .ai-response-section li {
+  border-color: #d9e1ed;
+  background: #ffffff;
+  color: #1d293f;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+:root:not([data-theme="dark"]) .ai-inline-sources a {
+  color: #087c59;
+  font-size: 9px;
+}

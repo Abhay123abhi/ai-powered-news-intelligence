@@ -136,6 +136,17 @@ export default function AiWorkspace({ articles }) {
     run("Ask the news", (signal) => aiApi.ask(trimmedQuestion, articles, signal), { clearQuestion: true });
   };
 
+  const closeInsight = () => {
+    // Invalidate any late response before aborting an in-flight generation.
+    version.current += 1;
+    pending.current?.abort();
+    pending.current = null;
+    setLoading(false);
+    setResult(null);
+    setError("");
+    setActiveLabel("");
+  };
+
   if (!enabled) return <DisabledAiWorkspace />;
 
   return <aside className="ai-panel" id="ai-workspace">
@@ -163,7 +174,18 @@ export default function AiWorkspace({ articles }) {
     {(loading || result || error) && <section className={`ai-insight-card ${loading ? "loading" : ""}`} ref={resultRef} aria-live="polite">
       <div className="ai-insight-head">
         <div><span className="ai-insight-kicker">✦ AI INSIGHT</span><strong>{activeLabel || "News intelligence"}</strong></div>
-        {!loading && !error && <span className="ai-grounded-badge">Current feed only</span>}
+        <div className="ai-insight-actions">
+          {!loading && !error && <span className="ai-grounded-badge">Current feed only</span>}
+          <button
+            type="button"
+            className="ai-insight-close"
+            aria-label="Close AI insight"
+            title="Close insight"
+            onClick={closeInsight}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
       </div>
       {loading ? <div className="ai-thinking"><span /><span /><span /><p>Analyzing the current stories…</p></div> : error ? <p className="ai-error">{error}</p> : <StructuredInsight response={result} />}
     </section>}
