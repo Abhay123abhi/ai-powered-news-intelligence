@@ -2,6 +2,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import newsApi from "./features/news/api/newsApi";
 
 vi.mock("./features/news/api/newsApi", () => ({
   default: {
@@ -65,6 +66,35 @@ describe("mobile navigation", () => {
 
     await act(async () => { buttons[0].click(); });
     expect(container.querySelector(".app-shell").className).toContain("mobile-view-discover");
+  });
+
+  it("keeps the most recent topic result when an older request finishes late", async () => {
+    let resolveOld;
+    let resolveLatest;
+    newsApi.search.mockReset();
+    newsApi.search
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveLatest = resolve; }));
+
+    // Reinitialize after the default render in beforeEach, so both requests
+    // are under this test's control.
+    await act(async () => { root.unmount(); });
+    root = createRoot(container);
+    await act(async () => { root.render(<App />); });
+    const technology = [...container.querySelectorAll(".quick-topics button")]
+      .find((button) => button.textContent === "Technology");
+    await act(async () => { technology.click(); });
+
+    await act(async () => resolveLatest({
+      articles: [{ title: "Technology topic", url: "https://example.com/tech", source: "Guardian" }],
+      page: 1, totalPages: 1, searchKeyword: "technology"
+    }));
+    await act(async () => resolveOld({
+      articles: [{ title: "Old headline", url: "https://example.com/old", source: "Guardian" }],
+      page: 1, totalPages: 1, searchKeyword: "latest"
+    }));
+    expect(container.textContent).toContain("Technology topic");
+    expect(container.textContent).not.toContain("Old headline");
   });
 
   it("keeps search in Discover and not in the bottom navigation", () => {
