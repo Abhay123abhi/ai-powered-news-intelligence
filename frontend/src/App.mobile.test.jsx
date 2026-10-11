@@ -53,15 +53,17 @@ describe("mobile navigation", () => {
     expect(buttons[0].getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("offers a way back to Discover from the AI panel", async () => {
+  it("keeps the AI context informational and uses the bottom navigation for Discover", async () => {
     const buttons = [...container.querySelectorAll(".mobile-bottom-nav button")];
     await act(async () => { buttons[1].click(); });
 
-    const browse = container.querySelector(".mobile-context-action");
-    expect(browse).not.toBeNull();
-    expect(browse.textContent).toContain("Browse news");
+    const context = container.querySelector(".mobile-ai-context");
+    expect(context.textContent).toContain("0 stories in context");
+    expect(context.textContent).toContain("AI insights use news articles");
+    expect(context.querySelector("button")).toBeNull();
+    expect(container.querySelector(".mobile-context-action")).toBeNull();
 
-    await act(async () => { browse.click(); });
+    await act(async () => { buttons[0].click(); });
     expect(container.querySelector(".app-shell").className).toContain("mobile-view-discover");
   });
 
