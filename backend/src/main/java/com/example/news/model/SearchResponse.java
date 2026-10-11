@@ -13,6 +13,9 @@ public record SearchResponse(
         Integer prevPage,
         Integer nextPage,
         long timeTakenMs,
-        List<NewsArticle> articles
+        List<NewsArticle> articles,
+        boolean partialResults,
+        List<String> failedProviders,
+        String retrievedAt
 ) {
 }

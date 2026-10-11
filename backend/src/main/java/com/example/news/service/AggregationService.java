@@ -58,6 +58,7 @@ public class AggregationService {
         int size = (pageSize <= 0) ? DEFAULT_PAGE_SIZE : Math.min(pageSize, 25);
 
         List<NewsArticle> allArticles = new ArrayList<>();
+        List<String> failedProviders = new ArrayList<>();
         int totalAvailableArticles = 0;
         int availablePages = currentPage;
 
@@ -100,6 +101,7 @@ public class AggregationService {
                     availablePages = Math.max(availablePages, result.totalPages());
                 } catch (CompletionException ex) {
                     Throwable cause = ex.getCause() == null ? ex : ex.getCause();
+                    failedProviders.add(task.providerName());
                     if (cause instanceof TimeoutException) {
                         timedOutProviders++;
                         log.warn("Provider {} timed out after {} ms",
@@ -165,7 +167,10 @@ public class AggregationService {
                 currentPage > 1 ? currentPage - 1 : null,
                 nextPage,
                 timeTaken,
-                uniqueArticles
+                uniqueArticles,
+                !failedProviders.isEmpty(),
+                List.copyOf(failedProviders),
+                Instant.now().toString()
         );
     }
 
