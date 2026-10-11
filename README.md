@@ -6,6 +6,8 @@ This project brings those concerns into one product: it searches The Guardian an
 
 **Live demo:** https://abhay123abhi-news-web.onrender.com/
 
+For the target audience, acceptance criteria, reliability fixes and staged product improvements, see [Product definition and validation plan](docs/product-problem-and-roadmap.md).
+
 ## Why this project exists
 
 - Read and search multiple publishers from one consistent feed.

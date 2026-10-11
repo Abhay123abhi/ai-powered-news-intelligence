@@ -190,6 +190,9 @@ class AggregationServiceTest {
         SearchResponse response = multiProviderService.search("java", 1, 12);
 
         assertThat(response.articles()).containsExactly(nytArticle);
+        assertThat(response.partialResults()).isTrue();
+        assertThat(response.failedProviders()).containsExactly("Guardian");
+        assertThat(response.retrievedAt()).isNotBlank();
         assertThat(response.totalArticles()).isEqualTo(8);
         assertThat(response.totalPages()).isEqualTo(1);
     }

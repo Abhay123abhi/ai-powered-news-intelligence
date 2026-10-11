@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import newsApi from "./features/news/api/newsApi";
 import SearchForm from "./features/news/components/SearchForm";
 import NewsList from "./features/news/components/NewsList";
@@ -12,6 +12,7 @@ import "./premium-search-mobile.css";
 import "./light-mode-clarity.css";
 import "./mobile-usability.css";
 import "./landing-fold.css";
+import "./trust-signals.css";
 
 const DEFAULT_QUERY = "latest";
 const DEFAULT_PAGE_SIZE = 12;
@@ -35,28 +36,41 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [slowRequest, setSlowRequest] = useState(false);
   const [error, setError] = useState("");
+  const newsRequest = useRef(null);
 
   const loadNews = useCallback(async (keyword, page, pageSize) => {
+    newsRequest.current?.abort();
+    const controller = new AbortController();
+    newsRequest.current = controller;
     setLoading(true);
     setSlowRequest(false);
     setError("");
+    setData({ articles: [], page: 1, totalPages: 1 });
     try {
-      const response = await newsApi.search(keyword, page, pageSize);
+      const response = await newsApi.search(keyword, page, pageSize, controller.signal);
+      if (controller.signal.aborted) return;
       setData(response);
       setSearch({ keyword, pageSize });
     } catch (requestError) {
+      if (controller.signal.aborted) return;
       setError(
         requestError.response?.data?.detail ||
         requestError.response?.data?.message ||
         "We couldn't load the news right now. Please try again."
       );
     } finally {
-      setLoading(false);
-      setSlowRequest(false);
+      if (newsRequest.current === controller) {
+        newsRequest.current = null;
+        setLoading(false);
+        setSlowRequest(false);
+      }
     }
   }, []);
 
-  useEffect(() => { loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE); }, [loadNews]);
+  useEffect(() => {
+    loadNews(DEFAULT_QUERY, 1, DEFAULT_PAGE_SIZE);
+    return () => newsRequest.current?.abort();
+  }, [loadNews]);
   useEffect(() => {
     if (!loading) return undefined;
     const timer = window.setTimeout(() => setSlowRequest(true), 10000);
@@ -178,6 +192,9 @@ export default function App() {
 
         {slowRequest && <div className="startup-banner" role="status"><span aria-hidden="true">◷</span><div><strong>Waking the news service</strong><p>The free server is starting. Your first request can take about a minute.</p></div></div>}
 
+        {!loading && !error && data.partialResults && <div className="provider-notice" role="status">
+          Showing available stories. {data.failedProviders?.join(" and ") || "One publisher"} could not respond; coverage may be incomplete.
+        </div>}
         <div className="feed-column">
           <NewsList articles={data.articles || []} loading={loading} error={error} onRetry={() => loadNews(search.keyword, data.page || 1, search.pageSize)} />
           {!loading && !error && data.articles?.length > 0 && <nav className="pagination" aria-label="News result pages">
