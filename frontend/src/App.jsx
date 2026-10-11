@@ -154,10 +154,9 @@ export default function App() {
           <div className="mobile-ai-context">
             <span>AI RESEARCH WORKSPACE</span>
             <strong>{data.articles?.length || 0} stories in context</strong>
-            <p>{data.articles?.length ? "Create a briefing or ask questions about the stories in your current feed." : "Search for news in Discover first, then return here to explore it with AI."}</p>
-            <button type="button" className="mobile-context-action" onClick={() => switchMobileView("discover")}>
-              Browse news <span aria-hidden="true">→</span>
-            </button>
+            <p>{data.articles?.length
+              ? "Brief, ask questions, and compare the stories in your current feed."
+              : "AI insights use news articles from your Discover feed."}</p>
           </div>
           <div className="ai-stage-halo" aria-hidden="true" />
           <div className="ai-stage-label" aria-hidden="true"><span /> LIVE INTELLIGENCE LAYER</div>
